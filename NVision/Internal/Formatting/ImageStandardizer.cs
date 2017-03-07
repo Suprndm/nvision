@@ -94,10 +94,6 @@ namespace NVision.Internal.Formatting
                 B = new int[image.Width, image.Height],
             };
 
-
-
-
-
             for (int x = 0; x < image.Width; x++)
             {
                 for (int y = 0; y < image.Height; y++)
@@ -105,6 +101,26 @@ namespace NVision.Internal.Formatting
                     standardImage.R[x, y] = image.C[x, y];
                     standardImage.G[x, y] = image.C[x, y];
                     standardImage.B[x, y] = image.C[x, y];
+                }
+            }
+
+            return standardImage;
+        }
+
+        internal GrayscaleStandardImage ConvertToGrayScaleStandardImage(StandardImage image)
+        {
+            var standardImage = new GrayscaleStandardImage
+            {
+                Height = image.Height,
+                Width = image.Width,
+                C = new int[image.Width, image.Height],
+            };
+
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    standardImage.C[x, y] = (image.R[x, y] + image.G[x, y] + image.B[x, y]) / 3;
                 }
             }
 

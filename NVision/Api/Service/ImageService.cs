@@ -36,36 +36,153 @@ namespace NVision.Api.Service
             return new StandardSchema();
         }
 
+        private StandardImage Round(StandardImage image, int precision)
+        {
+            for (int x = 1; x < image.Width - 1; x++)
+            {
+                for (int y = 1; y < image.Height - 1; y++)
+                {
+                    image.B[x, y] = (image.B[x, y] / precision) * precision;
+                    image.G[x, y] = (image.G[x, y] / precision) * precision;
+                    image.B[x, y] = (image.B[x, y] / precision) * precision;
+                }
+            }
+
+            return image;
+        }
+
+        private IDictionary<Color, int> GetColors(Bitmap image)
+        {
+            var colors = new Dictionary<Color, int>();
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    Color pixelColor = image.GetPixel(x, y);
+                    if (colors.ContainsKey(pixelColor))
+                        colors[pixelColor]++;
+                    else
+                    {
+                        colors.Add(pixelColor, 1);
+                    }
+
+                }
+            }
+
+            return colors;
+        }
+
+
+        private Color GetMostPopularLightColor(IDictionary<Color, int> colors)
+        {
+            List<KeyValuePair<Color, int>> lightPopularity = new List<KeyValuePair<Color, int>>();
+
+            foreach (var kv in colors)
+            {
+                var color = kv.Key;
+                lightPopularity.Add(new KeyValuePair<Color, int>(kv.Key, kv.Value*(color.R+color.G+color.B)));
+            }
+
+            lightPopularity.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
+            var lightPopuplarColor = lightPopularity.First().Key;
+            int roundness = 20;
+            int pixelCount = 0;
+            int r = 0;
+            int g = 0;
+            int b = 0;
+
+            foreach (var kv in lightPopularity)
+            {
+                var color = kv.Key;
+
+                if (color.R >= lightPopuplarColor.R - roundness
+                    && color.G >= lightPopuplarColor.G - roundness
+                    && color.B >= lightPopuplarColor.B - roundness
+                    && color.R <= lightPopuplarColor.R + roundness
+                    && color.G <= lightPopuplarColor.G + roundness
+                    && color.B <= lightPopuplarColor.B + roundness)
+                {
+                    var colorOccurence = colors[color];
+                    r += kv.Key.R * colorOccurence;
+                    g += kv.Key.G * colorOccurence;
+                    b += kv.Key.B * colorOccurence;
+
+                    pixelCount += colorOccurence;
+                }
+            }
+
+            return Color.FromArgb(255, r / pixelCount, g / pixelCount, b / pixelCount);
+        }
+
+        private Color GetAverageColor(IList<KeyValuePair<Color, int>> colors)
+        {
+            int r = 0;
+            int g = 0;
+            int b = 0;
+
+            int pixelCount = 0;
+
+            foreach (var kv in colors)
+            {
+                r += kv.Key.R * kv.Value;
+                g += kv.Key.G * kv.Value;
+                b += kv.Key.B * kv.Value;
+
+                pixelCount += kv.Value;
+            }
+
+            return Color.FromArgb(255, r / pixelCount, g / pixelCount, b / pixelCount);
+        }
 
         public Bitmap PrepareImage(Bitmap bitmap)
         {
             bitmap = ReduceSize(bitmap, (double)500 / Math.Max(bitmap.Width, bitmap.Height));
-            var standardImage = _imageStandardizer.ConvertToGrayScaleStandardImage(bitmap);
-            _logger.Log(bitmap.Width + " x " + bitmap.Height);
-            standardImage = ChangeConstrast(standardImage, 250);
-            standardImage = ChangeLuminosity(standardImage, 50);
+            var colors = GetColors(bitmap);
+            var averageColor = GetAverageColor(colors.ToList());
+            var popularLightColor = GetMostPopularLightColor(colors);
+            var standardImage = _imageStandardizer.ConvertToStandardImage(bitmap);
+            var grayImage = ExactHat(standardImage, popularLightColor, 50);
+            //var standardImage = _imageStandardizer.ConvertToGrayScaleStandardImage(bitmap);
+            //_logger.Log(bitmap.Width + " x " + bitmap.Height);
+            //standardImage = ChangeConstrast(standardImage, 250);
+            //standardImage = ChangeLuminosity(standardImage, 50);
+            //standardImage = Hat(standardImage, 200);
+             
+             grayImage = Erosion(grayImage, 0);
+             grayImage = Dilatation(grayImage, 0);
 
-            standardImage = Erosion(standardImage, 0);
-            standardImage = Dilatation(standardImage, 0);
+            grayImage = Erosion(grayImage, 0);
+            grayImage = Dilatation(grayImage, 0);
 
-            standardImage = Erosion(standardImage, 0);
-            standardImage = Dilatation(standardImage, 0);
+            grayImage = Erosion(grayImage, 0);
+            grayImage = Dilatation(grayImage, 0);
 
-            standardImage = Erosion(standardImage, 0);
-            standardImage = Dilatation(standardImage, 0);
+            grayImage = Erosion(grayImage, 0);
+            grayImage = Dilatation(grayImage, 0);
 
-            standardImage = Laplacien(standardImage);
-            standardImage = Hat(standardImage, 100);
+            grayImage = Erosion(grayImage, 0);
+            grayImage = Dilatation(grayImage, 0);
 
-            var corners = GetCorners(standardImage);
-            var coloredStandardImage = _imageStandardizer.ConvertToStandardImage(standardImage);
+
+            //standardImage = Erosion(standardImage, 0);
+            //standardImage = Dilatation(standardImage, 0);
+
+            //standardImage = Erosion(standardImage, 0);
+            //standardImage = Dilatation(standardImage, 0);
+
+            grayImage = Laplacien(grayImage);
+            //standardImage = Hat(standardImage, 100);
+
+            var corners = GetCorners(grayImage);
+            var coloredStandardImage = _imageStandardizer.ConvertToStandardImage(grayImage);
 
             foreach (var point in corners)
             {
                 coloredStandardImage = DrawIndicator(coloredStandardImage, point.X, point.Y, 2);
             }
 
-            var result = _imageStandardizer.ConvertToBitmap(coloredStandardImage);
+            Bitmap result = null;
+            result = _imageStandardizer.ConvertToBitmap(coloredStandardImage);
 
             return result;
         }
@@ -73,9 +190,9 @@ namespace NVision.Api.Service
         private SimilarityResult SearchForForm(Form form, GrayscaleStandardImage image, Area area)
         {
             var scores = new List<SimilarityResult>();
-            for (int i = area.From.X+ form.Center.X; i < area.To.X - form.Center.X; i++)
+            for (int i = area.From.X; i < area.To.X; i++)
             {
-                for (int j = area.From.Y + form.Center.Y; j < area.To.Y - form.Center.Y; j++)
+                for (int j = area.From.Y; j < area.To.Y; j++)
                 {
                     var position = new Point(i, j);
                     scores.Add(new SimilarityResult(position,
@@ -92,22 +209,22 @@ namespace NVision.Api.Service
         {
             var points = new List<Point>();
             var topLeftCornerForm = _cornersBuilder.BuildTopLeftCornerForm();
-            var bestResult = SearchForForm(topLeftCornerForm, image, new Area(0, 0, image.Width/2, image.Height/2));
+            var bestResult = SearchForForm(topLeftCornerForm, image, new Area(0, 0, image.Width / 2, image.Height / 2));
             points.Add(bestResult.Position);
-            _logger.Log("Top Left best position : ("+bestResult.Position.X+","+bestResult.Position.Y+") with "+bestResult.Similarity);
+            _logger.Log("Top Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
 
             var topRightCornerForm = _cornersBuilder.BuildTopRightCornerForm();
-             bestResult = SearchForForm(topRightCornerForm, image, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
+            bestResult = SearchForForm(topRightCornerForm, image, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
             points.Add(bestResult.Position);
             _logger.Log("Top Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
 
             var bottomRightCornerForm = _cornersBuilder.BuildBottomRightCornerForm();
-            bestResult = SearchForForm(bottomRightCornerForm, image, new Area(image.Width / 2, image.Height/2, image.Width, image.Height));
+            bestResult = SearchForForm(bottomRightCornerForm, image, new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
             points.Add(bestResult.Position);
             _logger.Log("Bottom Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
 
             var bottomLeftCornerForm = _cornersBuilder.BuildBottomLeftCornerForm();
-            bestResult = SearchForForm(bottomLeftCornerForm, image, new Area(0, image.Height / 2, image.Width/2, image.Height));
+            bestResult = SearchForForm(bottomLeftCornerForm, image, new Area(0, image.Height / 2, image.Width / 2, image.Height));
             points.Add(bestResult.Position);
             _logger.Log("Bottom Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
 
@@ -118,11 +235,16 @@ namespace NVision.Api.Service
         private double EvalFormSimilarity(Form form, GrayscaleStandardImage image, Point position)
         {
             double score = 0;
-            for (int i = 0; i < form.Width; i++)
+            int leftOverlay = form.Center.X - position.X > 0 ? form.Center.X - position.X : 0;
+            int rightOverlay = position.X + (form.Width - form.Center.X) - image.Width > 0 ? position.X + (form.Width - form.Center.X) - image.Width : 0;
+            int topOverlay = form.Center.Y - position.Y > 0 ? form.Center.Y - position.Y : 0;
+            int bottomOverlay = position.Y + (form.Height - form.Center.Y) - image.Height > 0 ? position.Y + (form.Height - form.Center.Y) - image.Height : 0;
+
+            for (int i = leftOverlay; i < form.Width - rightOverlay; i++)
             {
-                for (int j = 0; j < form.Height; j++)
+                for (int j = topOverlay; j < form.Height - bottomOverlay; j++)
                 {
-                    score += (form.Mask[i, j] * image.C[position.X + i - form.Center.X, position.Y + j - form.Center.Y]/255);
+                    score += (form.Mask[i, j] * image.C[position.X + i - form.Center.X, position.Y + j - form.Center.Y] / 255);
                 }
             }
 
@@ -291,6 +413,59 @@ namespace NVision.Api.Service
             }
 
             return image;
+        }
+
+        private GrayscaleStandardImage ExactHat(StandardImage image, Color colorHat, int roundness)
+        {
+            var resultImage = _imageStandardizer.ConvertToGrayScaleStandardImage(image);
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                      if  (image.R[x, y] >= colorHat.R - roundness
+                        && image.G[x, y] >= colorHat.G - roundness
+                        && image.B[x, y] >= colorHat.B - roundness
+                        && image.R[x, y] <= colorHat.R + roundness
+                        && image.G[x, y] <= colorHat.G + roundness
+                        && image.B[x, y] <= colorHat.B + roundness)
+                    {
+                        resultImage.C[x, y] = 255;
+                    }
+                    else
+                    {
+                        resultImage.C[x, y] = 0;
+
+                    }
+                }
+
+            }
+
+            return resultImage;
+        }
+
+        private GrayscaleStandardImage Hat(StandardImage image, Color colorHat)
+        {
+            var resultImage = _imageStandardizer.ConvertToGrayScaleStandardImage(image);
+            for (int x = 0; x < image.Width; x++)
+            {
+                for (int y = 0; y < image.Height; y++)
+                {
+                    if (image.R[x, y] > colorHat.R
+                        && image.G[x, y] > colorHat.G
+                        && image.B[x, y] > colorHat.B)
+                    {
+                        resultImage.C[x, y] = 255;
+                    }
+                    else
+                    {
+                        resultImage.C[x, y] = 0;
+
+                    }
+                }
+
+            }
+
+            return resultImage;
         }
 
         private GrayscaleStandardImage Laplacien(GrayscaleStandardImage image)

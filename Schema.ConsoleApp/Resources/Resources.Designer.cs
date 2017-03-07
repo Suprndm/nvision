@@ -63,6 +63,26 @@ namespace Schema.ConsoleApp.Resources {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Schema_2 {
+            get {
+                object obj = ResourceManager.GetObject("Schema_2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Schema_3 {
+            get {
+                object obj = ResourceManager.GetObject("Schema_3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Schema_Test {
             get {
                 object obj = ResourceManager.GetObject("Schema_Test", resourceCulture);

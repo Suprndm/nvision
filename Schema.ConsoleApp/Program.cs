@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -14,11 +15,17 @@ namespace Schema.ConsoleApp
         static void Main(string[] args)
         {
             var schemaService = new SchemaService(new ConsoleLogger());
-            //var schemaPreview = schemaService.ExtractSchemaFromImage(Resources.Resources.Schema_Test);
-            var preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_Test);
 
+            Bitmap preparedImage = null;
 
-            preparedImage.Save("output.jpg", ImageFormat.Jpeg);
+            preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_Test);
+            preparedImage.Save("output1.jpg", ImageFormat.Jpeg);
+
+            preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_2);
+            preparedImage.Save("output2.jpg", ImageFormat.Jpeg);
+
+            preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_3);
+            preparedImage.Save("output3.jpg", ImageFormat.Jpeg);
             Console.WriteLine("Done");
             Console.ReadKey(true);
         }
