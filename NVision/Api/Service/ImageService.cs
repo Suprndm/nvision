@@ -18,7 +18,8 @@ namespace NVision.Api.Service
         private readonly CornersBuilder _cornersBuilder;
         private readonly FormSimilarityService _formSimilarityService;
 
-        private ImageService(ImageStandardizer imageStandardizer, CornersBuilder cornersBuilder, ILogger logger, FormSimilarityService formSimilarityService)
+        private ImageService(ImageStandardizer imageStandardizer, CornersBuilder cornersBuilder, ILogger logger,
+            FormSimilarityService formSimilarityService)
         {
             _imageStandardizer = imageStandardizer;
             _logger = logger;
@@ -27,9 +28,9 @@ namespace NVision.Api.Service
             _logger.Log(_formSimilarityService.ToString());
         }
 
-        public ImageService(ILogger logger) : this(new ImageStandardizer(), new CornersBuilder(), logger, new FormSimilarityService())
+        public ImageService(ILogger logger)
+            : this(new ImageStandardizer(), new CornersBuilder(), logger, new FormSimilarityService())
         {
-
         }
 
         public StandardSchema ExtractSchemaFromImage(Bitmap bitmap)
@@ -68,7 +69,6 @@ namespace NVision.Api.Service
                     {
                         colors.Add(pixelColor, 1);
                     }
-
                 }
             }
 
@@ -83,7 +83,7 @@ namespace NVision.Api.Service
             foreach (var kv in colors)
             {
                 var color = kv.Key;
-                lightPopularity.Add(new KeyValuePair<Color, int>(kv.Key, kv.Value*(color.R+color.G+color.B)));
+                lightPopularity.Add(new KeyValuePair<Color, int>(kv.Key, kv.Value * (color.R + color.G + color.B)));
             }
 
             lightPopularity.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
@@ -139,7 +139,7 @@ namespace NVision.Api.Service
 
         public Bitmap PrepareImage(Bitmap bitmap)
         {
-            bitmap = ReduceSize(bitmap, (double)500 / Math.Max(bitmap.Width, bitmap.Height));
+            bitmap = ReduceSize(bitmap, (double) 500 / Math.Max(bitmap.Width, bitmap.Height));
             var colors = GetColors(bitmap);
             var averageColor = GetAverageColor(colors.ToList());
             var popularLightColor = GetMostPopularLightColor(colors);
@@ -150,9 +150,6 @@ namespace NVision.Api.Service
             //standardImage = ChangeConstrast(standardImage, 250);
             //standardImage = ChangeLuminosity(standardImage, 50);
             //standardImage = Hat(standardImage, 200);
-             
-             grayImage = Erosion(grayImage, 0);
-             grayImage = Dilatation(grayImage, 0);
 
             grayImage = Erosion(grayImage, 0);
             grayImage = Dilatation(grayImage, 0);
@@ -166,15 +163,10 @@ namespace NVision.Api.Service
             grayImage = Erosion(grayImage, 0);
             grayImage = Dilatation(grayImage, 0);
 
-
-            //standardImage = Erosion(standardImage, 0);
-            //standardImage = Dilatation(standardImage, 0);
-
-            //standardImage = Erosion(standardImage, 0);
-            //standardImage = Dilatation(standardImage, 0);
+            grayImage = Erosion(grayImage, 0);
+            grayImage = Dilatation(grayImage, 0);
 
             grayImage = Laplacien(grayImage);
-            //standardImage = Hat(standardImage, 100);
 
             var corners = GetCorners(grayImage);
             var coloredStandardImage = _imageStandardizer.ConvertToStandardImage(grayImage);
@@ -188,6 +180,38 @@ namespace NVision.Api.Service
             result = _imageStandardizer.ConvertToBitmap(coloredStandardImage);
 
             return result;
+        }
+
+        private GrayscaleStandardImage UniformizeImage(GrayscaleStandardImage image, int maskSize)
+        {
+            for (int x = maskSize; x < image.Width - maskSize; x++)
+            {
+                for (int y = maskSize; y < image.Height - maskSize; y++)
+                {
+                    int sum = 0;
+                    for (int i = 0; i < maskSize; i++)
+                    {
+                        for (int j = 0; j < maskSize; j++)
+                        {
+                            if (i == 0 || j == 0 || i == maskSize - 1 || j == maskSize - 1)
+                            {
+                                sum += image.C[x - (i - maskSize / 2), y - (j - maskSize / 2)];
+                                
+                            }
+                        }
+                    }
+
+                    if (image.C[x, y] == 0 && (maskSize-1)*4*255==sum)
+                    {
+                        image.C[x, y] = 255;
+                    } else if(image.C[x, y] == 255 && sum==0)
+                    {
+                        image.C[x, y] = 0;
+                    }
+                }
+            }
+
+            return image;
         }
 
         private SimilarityResult SearchForForm(Form form, GrayscaleStandardImage image, Area area)
@@ -216,72 +240,29 @@ namespace NVision.Api.Service
             var topLeftCornerForm = _cornersBuilder.BuildTopLeftCornerForm();
             var bestResult = SearchForForm(topLeftCornerForm, image, new Area(0, 0, image.Width / 2, image.Height / 2));
             points.Add(bestResult.Position);
-            _logger.Log("Top Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
+            _logger.Log("Top Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " +
+                        bestResult.Similarity);
 
             var topRightCornerForm = _cornersBuilder.BuildTopRightCornerForm();
-            bestResult = SearchForForm(topRightCornerForm, image, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
+            bestResult = SearchForForm(topRightCornerForm, image,
+                new Area(image.Width / 2, 0, image.Width, image.Height / 2));
             points.Add(bestResult.Position);
-            _logger.Log("Top Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
+            _logger.Log("Top Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " +
+                        bestResult.Similarity);
 
             var bottomRightCornerForm = _cornersBuilder.BuildBottomRightCornerForm();
-            bestResult = SearchForForm(bottomRightCornerForm, image, new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
+            bestResult = SearchForForm(bottomRightCornerForm, image,
+                new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
             points.Add(bestResult.Position);
-            _logger.Log("Bottom Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
+            _logger.Log("Bottom Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y +
+                        ") with " + bestResult.Similarity);
 
             var bottomLeftCornerForm = _cornersBuilder.BuildBottomLeftCornerForm();
-            bestResult = SearchForForm(bottomLeftCornerForm, image, new Area(0, image.Height / 2, image.Width / 2, image.Height));
+            bestResult = SearchForForm(bottomLeftCornerForm, image,
+                new Area(0, image.Height / 2, image.Width / 2, image.Height));
             points.Add(bestResult.Position);
-            _logger.Log("Bottom Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " + bestResult.Similarity);
-
-
-            return points;
-        }
-
-        private double EvalFormSimilarity(Form form, GrayscaleStandardImage image, Point position)
-        {
-            double score = 0;
-         //   int leftOverlay = form.Center.X - position.X > 0 ? form.Center.X - position.X : 0;
-         //   int rightOverlay = position.X + (form.Width - form.Center.X) - image.Width > 0 ? position.X + (form.Width - form.Center.X) - image.Width : 0;
-         //   int topOverlay = form.Center.Y - position.Y > 0 ? form.Center.Y - position.Y : 0;
-         //   int bottomOverlay = position.Y + (form.Height - form.Center.Y) - image.Height > 0 ? position.Y + (form.Height - form.Center.Y) - image.Height : 0;
-         //   int whiteCount = 0;
-         //   for (int i = leftOverlay; i < form.Width - rightOverlay; i++)
-         //   {
-         //       for (int j = topOverlay; j < form.Height - bottomOverlay; j++)
-         //       {
-         //           int x = position.X + i - form.Center.X;
-         //           int y = position.Y + j - form.Center.Y;
-         //           if (image.C[x, y] == 255) whiteCount++;
-         //               score += (form.Mask[i, j] * image.C[x, y] / 255);
-         //       }
-         //   }
-
-         //   score = score / form.WhitePixelCount;
-         //   var whiteRatioSimilarity =
-         //       (double)Math.Abs(form.WhitePixelCount - whiteCount) /
-         //                ((form.Width - rightOverlay) * (form.Height - bottomOverlay) - form.WhitePixelCount);
-         ////   score = score - whiteRatioSimilarity;
-
-            return score;
-        }
-
-        private IList<Point> GetPointsOfPage(GrayscaleStandardImage image)
-        {
-            var points = new List<Point>();
-
-            for (int y = 1; y < image.Height - 1; y++)
-            {
-                if ((image.C[image.Width / 3, y] == 255)) points.Add(new Point(image.Width / 3, y));
-                if ((image.C[(2 * image.Width) / 3, y] == 255)) points.Add(new Point(2 * image.Width / 3, y));
-            }
-
-
-            for (int x = 1; x < image.Width - 1; x++)
-            {
-                if ((image.C[x, image.Height / 3] == 255)) points.Add(new Point(x, image.Height / 3));
-                if ((image.C[x, 2 * image.Height / 3] == 255)) points.Add(new Point(x, 2 * image.Height / 3));
-            }
-
+            _logger.Log("Bottom Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y +
+                        ") with " + bestResult.Similarity);
 
 
             return points;
@@ -352,7 +333,6 @@ namespace NVision.Api.Service
 
                         if (sum > 4 * 255)
                             newValue = 255;
-
                     }
                     else newValue = 255;
 
@@ -365,12 +345,12 @@ namespace NVision.Api.Service
 
         private GrayscaleStandardImage ChangeLuminosity(GrayscaleStandardImage image, int intensity)
         {
-            double luminosityCoeff = 1 + (double)intensity / 100;
+            double luminosityCoeff = 1 + (double) intensity / 100;
             for (int x = 0; x < image.Width; x++)
             {
                 for (int y = 0; y < image.Height; y++)
                 {
-                    image.C[x, y] = SafeAdd(0, (int)(image.C[x, y] * luminosityCoeff));
+                    image.C[x, y] = SafeAdd(0, (int) (image.C[x, y] * luminosityCoeff));
                 }
             }
 
@@ -385,7 +365,7 @@ namespace NVision.Api.Service
                 {
                     image.C[x, y] =
                         SafeAdd(image.C[x, y],
-                        (int)((double)intensity / 100 * (image.C[x, y] - 127)));
+                            (int) ((double) intensity / 100 * (image.C[x, y] - 127)));
                 }
             }
 
@@ -434,7 +414,7 @@ namespace NVision.Api.Service
             {
                 for (int y = 0; y < image.Height; y++)
                 {
-                      if  (image.R[x, y] >= colorHat.R - roundness
+                    if (image.R[x, y] >= colorHat.R - roundness
                         && image.G[x, y] >= colorHat.G - roundness
                         && image.B[x, y] >= colorHat.B - roundness
                         && image.R[x, y] <= colorHat.R + roundness
@@ -446,10 +426,8 @@ namespace NVision.Api.Service
                     else
                     {
                         resultImage.C[x, y] = 0;
-
                     }
                 }
-
             }
 
             return resultImage;
@@ -471,10 +449,8 @@ namespace NVision.Api.Service
                     else
                     {
                         resultImage.C[x, y] = 0;
-
                     }
                 }
-
             }
 
             return resultImage;
@@ -483,9 +459,11 @@ namespace NVision.Api.Service
         private GrayscaleStandardImage Laplacien(GrayscaleStandardImage image)
         {
             var matrice = new int[3, 3]
-                {{0, -1, 0},
-                 {-1, 4, -1},
-                 {0, -1, 0}};
+            {
+                {0, -1, 0},
+                {-1, 4, -1},
+                {0, -1, 0}
+            };
 
 
             var outputData = new GrayscaleStandardImage()
@@ -518,7 +496,8 @@ namespace NVision.Api.Service
 
         public Bitmap ReduceSize(Bitmap bitmap, double reduceRatio)
         {
-            Bitmap newBitmap = new Bitmap(bitmap, (int)(bitmap.Width * reduceRatio), (int)(bitmap.Height * reduceRatio));
+            Bitmap newBitmap = new Bitmap(bitmap, (int) (bitmap.Width * reduceRatio),
+                (int) (bitmap.Height * reduceRatio));
             return newBitmap;
         }
 
