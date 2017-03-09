@@ -16,15 +16,18 @@ namespace NVision.Api.Service
         private readonly ImageStandardizer _imageStandardizer;
         private readonly ILogger _logger;
         private readonly CornersBuilder _cornersBuilder;
+        private readonly FormSimilarityService _formSimilarityService;
 
-        private ImageService(ImageStandardizer imageStandardizer, CornersBuilder cornersBuilder, ILogger logger)
+        private ImageService(ImageStandardizer imageStandardizer, CornersBuilder cornersBuilder, ILogger logger, FormSimilarityService formSimilarityService)
         {
             _imageStandardizer = imageStandardizer;
             _logger = logger;
+            _formSimilarityService = formSimilarityService;
             _cornersBuilder = cornersBuilder;
+            _logger.Log(_formSimilarityService.ToString());
         }
 
-        public ImageService(ILogger logger) : this(new ImageStandardizer(), new CornersBuilder(), logger)
+        public ImageService(ILogger logger) : this(new ImageStandardizer(), new CornersBuilder(), logger, new FormSimilarityService())
         {
 
         }
@@ -196,11 +199,13 @@ namespace NVision.Api.Service
                 {
                     var position = new Point(i, j);
                     scores.Add(new SimilarityResult(position,
-                        EvalFormSimilarity(form, image, position)));
+                        _formSimilarityService.EvalFormSimilarity(form, image, position)));
                 }
             }
 
-            var bestResult = scores.OrderByDescending(x => x.Similarity).First();
+            var orderedScores = scores.OrderByDescending(x => x.Similarity);
+
+            var bestResult = orderedScores.First();
 
             return bestResult;
         }
@@ -235,20 +240,27 @@ namespace NVision.Api.Service
         private double EvalFormSimilarity(Form form, GrayscaleStandardImage image, Point position)
         {
             double score = 0;
-            int leftOverlay = form.Center.X - position.X > 0 ? form.Center.X - position.X : 0;
-            int rightOverlay = position.X + (form.Width - form.Center.X) - image.Width > 0 ? position.X + (form.Width - form.Center.X) - image.Width : 0;
-            int topOverlay = form.Center.Y - position.Y > 0 ? form.Center.Y - position.Y : 0;
-            int bottomOverlay = position.Y + (form.Height - form.Center.Y) - image.Height > 0 ? position.Y + (form.Height - form.Center.Y) - image.Height : 0;
+         //   int leftOverlay = form.Center.X - position.X > 0 ? form.Center.X - position.X : 0;
+         //   int rightOverlay = position.X + (form.Width - form.Center.X) - image.Width > 0 ? position.X + (form.Width - form.Center.X) - image.Width : 0;
+         //   int topOverlay = form.Center.Y - position.Y > 0 ? form.Center.Y - position.Y : 0;
+         //   int bottomOverlay = position.Y + (form.Height - form.Center.Y) - image.Height > 0 ? position.Y + (form.Height - form.Center.Y) - image.Height : 0;
+         //   int whiteCount = 0;
+         //   for (int i = leftOverlay; i < form.Width - rightOverlay; i++)
+         //   {
+         //       for (int j = topOverlay; j < form.Height - bottomOverlay; j++)
+         //       {
+         //           int x = position.X + i - form.Center.X;
+         //           int y = position.Y + j - form.Center.Y;
+         //           if (image.C[x, y] == 255) whiteCount++;
+         //               score += (form.Mask[i, j] * image.C[x, y] / 255);
+         //       }
+         //   }
 
-            for (int i = leftOverlay; i < form.Width - rightOverlay; i++)
-            {
-                for (int j = topOverlay; j < form.Height - bottomOverlay; j++)
-                {
-                    score += (form.Mask[i, j] * image.C[position.X + i - form.Center.X, position.Y + j - form.Center.Y] / 255);
-                }
-            }
-
-            score = score / form.WhitePixelCount;
+         //   score = score / form.WhitePixelCount;
+         //   var whiteRatioSimilarity =
+         //       (double)Math.Abs(form.WhitePixelCount - whiteCount) /
+         //                ((form.Width - rightOverlay) * (form.Height - bottomOverlay) - form.WhitePixelCount);
+         ////   score = score - whiteRatioSimilarity;
 
             return score;
         }

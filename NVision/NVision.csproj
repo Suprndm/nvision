@@ -47,6 +47,7 @@
     <Compile Include="Api\Model\Line.cs" />
     <Compile Include="Api\Model\SimilarityResult.cs" />
     <Compile Include="Api\Model\StandardSchema.cs" />
+    <Compile Include="Api\Service\FormSimilarityService.cs" />
     <Compile Include="Api\Service\IImageService.cs" />
     <Compile Include="Api\Service\ImageService.cs" />
     <Compile Include="Internal\Model\GrayscaleStandardImage.cs" />

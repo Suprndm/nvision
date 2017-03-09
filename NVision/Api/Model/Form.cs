@@ -9,19 +9,32 @@ namespace NVision.Api.Model
 {
     public class Form
     {
-        public Form(int size)
+        public Form(bool[,] mask, int size)
         {
-            Mask = new double[size, size];
+            Mask = mask;
             Height = size;
             Width = size;
             Center = new Point(size/2,size/2);
-            WhitePixelCount = 0;
+            Whites = new List<Point>();
+            for (int i = 0; i < Width; i++)
+            {
+                for (int j = 0; j < Height; j++)
+                {
+                    if (Mask[i, j])
+                    {
+                        Whites.Add(new Point(i, j));
+                    }
+                }
+            }
         }
-        public double[,] Mask { get; set; }
+
+        public bool[,] Mask { get; set; }
+
         public int Height { get; set; }
         public int Width { get; set; }
         public Point Center { get; set; }
-        public int WhitePixelCount { get; set; }
+
+        public IList<Point> Whites { get; set; }
 
         public override string ToString()
         {
@@ -30,7 +43,7 @@ namespace NVision.Api.Model
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    str += " " + Mask[i, j].ToString("N1")+" ";
+                    str += " " + Mask[i, j].ToString()[0]+" ";
                 }
                 str += "\n";
             }
