@@ -26,8 +26,14 @@ namespace Schema.ConsoleApp
 
             preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_3);
             preparedImage.Save("output3.jpg", ImageFormat.Jpeg);
+
+            preparedImage = schemaService.PrepareImage(Resources.Resources.Schema_4);
+            preparedImage.Save("output4.jpg", ImageFormat.Jpeg);
+
             Console.WriteLine("Done");
             Console.ReadKey(true);
+
+        
         }
     }
 }
