@@ -67,6 +67,33 @@ namespace NVision.Internal.Formatting
             return bitmap;
         }
 
+        internal GrayscaleStandardImage CreateGrayscaleStandardImage(int width, int height)
+        {
+            var standardImage = new GrayscaleStandardImage
+            {
+                Height = height,
+                Width = width,
+                C = new int[width, height],
+            };
+
+            return standardImage;
+        }
+
+
+        internal StandardImage CreateStandardImage(int width, int height)
+        {
+            var standardImage = new StandardImage()
+            {
+                Height = height,
+                Width = width,
+                R = new int[width, height],
+                G = new int[width, height],
+                B = new int[width, height],
+            };
+
+            return standardImage;
+        }
+
         internal Bitmap ConvertToBitmap(GrayscaleStandardImage grayScaleStandardImage)
         {
             var bitmap = new Bitmap(grayScaleStandardImage.Width, grayScaleStandardImage.Height);

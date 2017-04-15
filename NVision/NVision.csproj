@@ -50,6 +50,7 @@
     <Compile Include="Api\Service\FormSimilarityService.cs" />
     <Compile Include="Api\Service\IImageService.cs" />
     <Compile Include="Api\Service\ImageService.cs" />
+    <Compile Include="Api\Service\RotationHelper.cs" />
     <Compile Include="Internal\Model\GrayscaleStandardImage.cs" />
     <Compile Include="Internal\Model\StandardImage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

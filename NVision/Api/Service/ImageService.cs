@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Helper;
 using NVision.Api.Model;
@@ -177,10 +178,62 @@ namespace NVision.Api.Service
                 coloredStandardImage = DrawIndicator(coloredStandardImage, point.X, point.Y, 2);
             }
 
+            var rotatedImage = RotateImage(standardImage, corners);
+
             Bitmap result = null;
-            result = _imageStandardizer.ConvertToBitmap(coloredStandardImage);
+            result = _imageStandardizer.ConvertToBitmap(rotatedImage);
 
             return result;
+        }
+
+        private StandardImage RotateImage(StandardImage image, IList<Point> points)
+        {
+            double[] system = RotationHelper.GetSystem(points.ToArray());
+            int W = 375, H = 500;
+            StandardImage target = _imageStandardizer.CreateStandardImage(W, H);
+
+            // pour chaque pixel (x,y) de l'image corrigée
+            for (int y = 0; y < H; y++)
+            {
+                for (int x = 0; x < W; x++)
+                {
+
+                    // conversion dans le repère orthonormé (u,v) [0,1]x[0,1]
+                    double u = (double)x / W;
+                    double v = (double)y / H;
+
+                    // passage dans le repère perspective
+                    double[] P =  RotationHelper.Invert(u, v, system);
+
+
+                    // copie du pixel (px,py) correspondant de l'image source 
+                    // TODO: faire une interpolation
+                    int px = (int)Math.Round(P[0]);
+                    int py = (int)Math.Round(P[1]);
+                    int colorR = 0;
+                    int colorG = 0;
+                    int colorB = 0;
+
+                    if (px < 0 || px >= W || py < 0 || py >= H)
+                    {
+                        colorR = 0;
+                        colorG = 0;
+                        colorB = 0;
+                    }
+                    else
+                    {
+                        colorR = image.R[px, py];
+                        colorG = image.G[px, py];
+                        colorB = image.B[px, py];
+                    }
+
+                    target.R[x, y] = colorR;
+                    target.G[x, y] = colorG;
+                    target.B[x, y] = colorB;
+
+                }
+            }
+            return target;
         }
 
         private GrayscaleStandardImage UniformizeImage(GrayscaleStandardImage image, int maskSize)
@@ -239,13 +292,21 @@ namespace NVision.Api.Service
         private IList<Point> GetCorners(GrayscaleStandardImage image)
         {
             var points = new List<Point>();
+            var pointsDictionnary = new Dictionary<string , Point>();
             var corners = new Dictionary<Form, Area>();
             corners.Add(_cornersBuilder.BuildTopLeftCornerForm(), new Area(0, 0, image.Width / 2, image.Height / 2));
             corners.Add(_cornersBuilder.BuildTopRightCornerForm(), new Area(image.Width / 2, 0, image.Width, image.Height / 2));
             corners.Add(_cornersBuilder.BuildBottomRightCornerForm(), new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
             corners.Add(_cornersBuilder.BuildBottomLeftCornerForm(), new Area(0, image.Height / 2, image.Width / 2, image.Height));
 
-            Parallel.ForEach(corners.Keys, (form) => points.Add(SearchForForm(form, image, corners[form]).Position));
+
+            Parallel.ForEach(corners.Keys, (form) => pointsDictionnary.Add(form.Name, SearchForForm(form, image, corners[form]).Position));
+
+            points.Add(pointsDictionnary["TopLeftCorner"]);
+            points.Add(pointsDictionnary["TopRightCorner"]);
+            points.Add(pointsDictionnary["BottomRightCorner"]);
+            points.Add(pointsDictionnary["BottomLeftCorner"]);
+
             return points;
         }
 
