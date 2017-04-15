@@ -28,7 +28,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize);
+            var form = new Form(mask, _cornerSize, "topLeftCorner");
 
             return form;
         }
@@ -51,7 +51,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize);
+            var form = new Form(mask, _cornerSize, "TopRightCorner");
 
             return form;
         }
@@ -72,7 +72,7 @@ namespace NVision.Api.Model
                     }
                 }
             }
-            var form = new Form(mask, _cornerSize);
+            var form = new Form(mask, _cornerSize, "bottomLeftCorner");
 
             return form;
         }
@@ -94,7 +94,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize);
+            var form = new Form(mask, _cornerSize, "bottomRightCorner");
 
             return form;
         }

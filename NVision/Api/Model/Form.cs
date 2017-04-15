@@ -9,8 +9,9 @@ namespace NVision.Api.Model
 {
     public class Form
     {
-        public Form(bool[,] mask, int size)
+        public Form(bool[,] mask, int size, string name = null)
         {
+            Name = name;
             Mask = mask;
             Height = size;
             Width = size;
@@ -33,7 +34,7 @@ namespace NVision.Api.Model
         public int Height { get; set; }
         public int Width { get; set; }
         public Point Center { get; set; }
-
+        public string Name { get; set; }
         public IList<Point> Whites { get; set; }
 
         public override string ToString()

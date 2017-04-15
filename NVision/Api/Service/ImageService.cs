@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Threading.Tasks;
 using Helper;
 using NVision.Api.Model;
 using NVision.Internal.Formatting;
@@ -234,37 +235,17 @@ namespace NVision.Api.Service
             return bestResult;
         }
 
+
         private IList<Point> GetCorners(GrayscaleStandardImage image)
         {
             var points = new List<Point>();
-            var topLeftCornerForm = _cornersBuilder.BuildTopLeftCornerForm();
-            var bestResult = SearchForForm(topLeftCornerForm, image, new Area(0, 0, image.Width / 2, image.Height / 2));
-            points.Add(bestResult.Position);
-            _logger.Log("Top Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " +
-                        bestResult.Similarity);
+            var corners = new Dictionary<Form, Area>();
+            corners.Add(_cornersBuilder.BuildTopLeftCornerForm(), new Area(0, 0, image.Width / 2, image.Height / 2));
+            corners.Add(_cornersBuilder.BuildTopRightCornerForm(), new Area(image.Width / 2, 0, image.Width, image.Height / 2));
+            corners.Add(_cornersBuilder.BuildBottomRightCornerForm(), new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
+            corners.Add(_cornersBuilder.BuildBottomLeftCornerForm(), new Area(0, image.Height / 2, image.Width / 2, image.Height));
 
-            var topRightCornerForm = _cornersBuilder.BuildTopRightCornerForm();
-            bestResult = SearchForForm(topRightCornerForm, image,
-                new Area(image.Width / 2, 0, image.Width, image.Height / 2));
-            points.Add(bestResult.Position);
-            _logger.Log("Top Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y + ") with " +
-                        bestResult.Similarity);
-
-            var bottomRightCornerForm = _cornersBuilder.BuildBottomRightCornerForm();
-            bestResult = SearchForForm(bottomRightCornerForm, image,
-                new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
-            points.Add(bestResult.Position);
-            _logger.Log("Bottom Right best position : (" + bestResult.Position.X + "," + bestResult.Position.Y +
-                        ") with " + bestResult.Similarity);
-
-            var bottomLeftCornerForm = _cornersBuilder.BuildBottomLeftCornerForm();
-            bestResult = SearchForForm(bottomLeftCornerForm, image,
-                new Area(0, image.Height / 2, image.Width / 2, image.Height));
-            points.Add(bestResult.Position);
-            _logger.Log("Bottom Left best position : (" + bestResult.Position.X + "," + bestResult.Position.Y +
-                        ") with " + bestResult.Similarity);
-
-
+            Parallel.ForEach(corners.Keys, (form) => points.Add(SearchForForm(form, image, corners[form]).Position));
             return points;
         }
 

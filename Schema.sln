@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Schema.Api", "Schema.Api\Sc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helper", "Helper\Helper.csproj", "{924C7E3C-66D6-4BAF-896A-ACC3EA6D9A92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NVision.Tests", "NVision.Tests\NVision.Tests.csproj", "{5073CE14-88D2-43A8-9DDD-83F5191962C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NVision.Reporting", "NVision.Report\NVision.Reporting.csproj", "{22DC9BA8-F7CD-4893-AC19-BEA268B85623}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{924C7E3C-66D6-4BAF-896A-ACC3EA6D9A92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{924C7E3C-66D6-4BAF-896A-ACC3EA6D9A92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{924C7E3C-66D6-4BAF-896A-ACC3EA6D9A92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5073CE14-88D2-43A8-9DDD-83F5191962C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5073CE14-88D2-43A8-9DDD-83F5191962C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5073CE14-88D2-43A8-9DDD-83F5191962C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5073CE14-88D2-43A8-9DDD-83F5191962C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22DC9BA8-F7CD-4893-AC19-BEA268B85623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22DC9BA8-F7CD-4893-AC19-BEA268B85623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22DC9BA8-F7CD-4893-AC19-BEA268B85623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22DC9BA8-F7CD-4893-AC19-BEA268B85623}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
