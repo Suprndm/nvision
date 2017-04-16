@@ -42,8 +42,8 @@ namespace NVision.Internal.Service
                 for (int j = area.From.Y; j < area.To.Y; j++)
                 {
                     var position = new Point(i, j);
-                    scores.Add(new SimilarityResult(position,
-                        EvalFormSimilarity(form, image, position)));
+                    if(image.C[i,j]==255)
+                    scores.Add(new SimilarityResult(position, EvalFormSimilarity(form, image, position)));
                 }
             }
 
