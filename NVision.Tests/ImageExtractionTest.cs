@@ -69,8 +69,10 @@ namespace NVision.Tests
                 var step = Operation.ImageConversion;
                 _stopwatch.Start();
                 var bitmap = _testCases[i];
-                bitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
-                var standardImage = bitmap.ConvertToStandardImage();
+                var reducedBitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
+                var targetBitmap = bitmap.ReduceSize((double)1000 / Math.Max(bitmap.Width, bitmap.Height));
+                var targetStandardImage = targetBitmap.ConvertToStandardImage();
+                var standardImage = reducedBitmap.ConvertToStandardImage();
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
@@ -91,10 +93,17 @@ namespace NVision.Tests
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
 
-                // Step Straightening
+                var originalRatio = targetStandardImage.Height/grayImage.Height;
+                IList<Point> originalCornersCoordinates = new List<Point>();
+                foreach (var corner in corners)
+                {
+                    originalCornersCoordinates.Add(new Point(corner.X* originalRatio, corner.Y * originalRatio ));
+                }
+
+                    // Step Straightening
                 step = Operation.ImageStraightening;
                 _stopwatch.Start();
-                var straightenImage  = _documentStraightenerService.StraightenDocument(standardImage, corners);
+                var straightenImage  = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
