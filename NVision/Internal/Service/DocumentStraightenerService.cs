@@ -12,7 +12,8 @@ namespace NVision.Internal.Service
         public StandardImage StraightenDocument(StandardImage image, IList<Point> points)
         {
             double[] system = RotationHelper.GetSystem(points.ToArray());
-            int W = 375, H = 500;
+            var size = RotationHelper.GetOriginalDimensions(points);
+            int W = size.Width, H = size.Height;
             StandardImage target = ImageStandardizer.CreateStandardImage(W, H);
 
             // pour chaque pixel (x,y) de l'image corrigée
@@ -37,7 +38,7 @@ namespace NVision.Internal.Service
                     int colorG = 0;
                     int colorB = 0;
 
-                    if (px < 0 || px >= W || py < 0 || py >= H)
+                    if (px < 0 || px >= image.Width || py < 0 || py >= image.Height)
                     {
                         colorR = 0;
                         colorG = 0;

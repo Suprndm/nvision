@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace NVision.Internal.Service
 {
@@ -35,6 +37,53 @@ namespace NVision.Internal.Service
             double X = (system[0] * u + system[1] * v + system[2]) / (system[6] * u + system[7] * v + 1);
             double Y = (system[3] * u + system[4] * v + system[5]) / (system[6] * u + system[7] * v + 1);
             return new double[] { X, Y };
+        }
+
+        public static Size GetOriginalDimensions(IList<Point> points)
+        {
+            double w1 = GetDistanceBetweenTwoPoints(points[0], points[1]);
+            double h1 = GetDistanceBetweenTwoPoints(points[1], points[2]);
+            double w2 = GetDistanceBetweenTwoPoints(points[2], points[3]);
+            double h2 = GetDistanceBetweenTwoPoints(points[3], points[0]);
+
+            double originalW = 0;
+            double originalH= 0;
+            double widthRatio;
+            double heightRatio;
+
+            if (w1 >= w2)
+            {
+                widthRatio = w1/w2;
+                originalW = w1;
+            }
+            else
+            {
+                widthRatio = w2 / w1;
+                originalW = w2;
+            }
+
+            h1 = h1*widthRatio;
+            h2 = h2*widthRatio;
+
+            if (h1 >= h2)
+            {
+               heightRatio = h1 / h2;
+                originalH = h1;
+            }
+            else
+            {
+                heightRatio = h2 / h1;
+                originalH = h2;
+            }
+
+            originalW = originalW* heightRatio;
+
+            return new Size((int)originalW, (int)originalH);
+        }
+
+        public static int GetDistanceBetweenTwoPoints(Point a, Point b)
+        {
+            return (int)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         }
     }
 }
