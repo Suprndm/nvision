@@ -8,9 +8,9 @@ namespace NVision.Report
 {
     public class OperationTestReport
     {
-        public Operation Operation { get; set; }
+        public IDictionary<Operation, OperationTestResult> Results { get; set; }
         public DateTime Date { get; set; }
         public int ImagesCount { get; set; }
-        public OperationTestResult Result { get; set; }
+        public long TotalExecutionTimeMs { get; set; }
     }
 }

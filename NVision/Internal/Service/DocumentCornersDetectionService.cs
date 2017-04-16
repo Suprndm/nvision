@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using NVision.Api.Model;
-using NVision.Api.Service;
+using NVision.Internal.Formatting;
 using NVision.Internal.Model;
 
 namespace NVision.Internal.Service
@@ -17,6 +14,8 @@ namespace NVision.Internal.Service
             var points = new List<Point>();
             var pointsDictionnary = new Dictionary<string, Point>();
             var corners = new Dictionary<Form, Area>();
+
+            image = ImageHelper.Laplacien(image);
 
             corners.Add(CornersBuilder.BuildTopLeftCornerForm(), new Area(0, 0, image.Width / 2, image.Height / 2));
             corners.Add(CornersBuilder.BuildTopRightCornerForm(), new Area(image.Width / 2, 0, image.Width, image.Height / 2));
@@ -32,6 +31,19 @@ namespace NVision.Internal.Service
             points.Add(pointsDictionnary["BottomLeftCorner"]);
 
             return points;
+        }
+
+        public StandardImage GetCornersImageResult(GrayscaleStandardImage grayImage, IList<Point> corners)
+        {
+            grayImage = ImageHelper.Laplacien(grayImage);
+            var coloredStandardImage = grayImage.ConvertToStandardImage();
+
+            foreach (var point in corners)
+            {
+                coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
+            }
+
+            return coloredStandardImage;
         }
     }
 }

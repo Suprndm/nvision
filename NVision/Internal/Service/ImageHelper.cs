@@ -233,6 +233,26 @@ namespace NVision.Internal.Service
             return image;
         }
 
+        internal static StandardImage DrawIndicator(this StandardImage image, int x, int y, int size)
+        {
+            for (int i = -size; i < size; i++)
+            {
+                for (int j = -size; j < size; j++)
+                {
+                    var posX = x + i;
+                    var posY = y + j;
+                    if (posX > 0 && posX < image.Width && posY > 0 && posY < image.Height)
+                    {
+                        image.R[posX, posY] = 0;
+                        image.G[posX, posY] = 255;
+                        image.B[posX, posY] = 0;
+                    }
+                }
+            }
+
+            return image;
+        }
+
         private  static int SafeAdd(int number, int addition)
         {
             var sum = number + addition;

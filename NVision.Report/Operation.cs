@@ -8,8 +8,10 @@ namespace NVision.Report
 {
     public enum Operation   
     {
-        ImageDetection,
-        ImageRotation,
+        ImageConversion,
+        ImagePreparation,
+        ImageCornerDetection,
+        ImageStraightening,
         ÏmageDataExtraction,
         ImageInterpretation
     }

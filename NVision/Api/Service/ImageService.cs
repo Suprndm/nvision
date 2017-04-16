@@ -1,15 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using Helper;
-using NVision.Api.Model;
 using NVision.Internal.Formatting;
-using NVision.Internal.Model;
 using NVision.Internal.Service;
 
 namespace NVision.Api.Service
@@ -22,9 +14,9 @@ namespace NVision.Api.Service
         private readonly DocumentStraightenerService _documentStraightenerService;
 
         private ImageService(
-            ILogger logger, 
-            DocumentPreparationService documentPreparationService, 
-            DocumentCornersDetectionService documentCornersDetectionService, 
+            ILogger logger,
+            DocumentPreparationService documentPreparationService,
+            DocumentCornersDetectionService documentCornersDetectionService,
             DocumentStraightenerService documentStraightenerService)
         {
             _logger = logger;
@@ -35,7 +27,7 @@ namespace NVision.Api.Service
         }
 
         public ImageService(ILogger logger)
-            : this( logger,
+            : this(logger,
                   new DocumentPreparationService(),
                   new DocumentCornersDetectionService(),
                   new DocumentStraightenerService())
@@ -48,16 +40,13 @@ namespace NVision.Api.Service
             var standardImage = bitmap.ConvertToStandardImage();
             var grayImage = _documentPreparationService.IsolateDocument(standardImage);
 
-
-            grayImage = ImageHelper.Laplacien(grayImage);
-
             var corners = _documentCornersDetectionService.GetCorners(grayImage);
 
             var coloredStandardImage = grayImage.ConvertToStandardImage();
 
             foreach (var point in corners)
             {
-                coloredStandardImage = DrawIndicator(coloredStandardImage, point.X, point.Y, 2);
+                coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
             }
 
             var rotatedImage = _documentStraightenerService.StraightenDocument(standardImage, corners);
@@ -66,27 +55,5 @@ namespace NVision.Api.Service
 
             return result;
         }
-
-        private StandardImage DrawIndicator(StandardImage image, int x, int y, int size)
-        {
-            for (int i = -size; i < size; i++)
-            {
-                for (int j = -size; j < size; j++)
-                {
-                    var posX = x + i;
-                    var posY = y + j;
-                    if (posX > 0 && posX < image.Width && posY > 0 && posY < image.Height)
-                    {
-                        image.R[posX, posY] = 0;
-                        image.G[posX, posY] = 255;
-                        image.B[posX, posY] = 0;
-                    }
-                }
-            }
-
-            return image;
-        }
-
-       
     }
 }
