@@ -39,31 +39,54 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="Tesseract, Version=3.0.2.0, Culture=neutral, PublicKeyToken=ebeb3d86bef60cbe, processorArchitecture=MSIL">
+      <HintPath>..\packages\Tesseract.3.0.2.0\lib\net451\Tesseract.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\Model\Area.cs" />
     <Compile Include="Api\Model\CornersBuilder.cs" />
     <Compile Include="Api\Model\Form.cs" />
     <Compile Include="Api\Model\Line.cs" />
-    <Compile Include="Api\Model\SimilarityResult.cs" />
+    <Compile Include="Internal\Model\SimilarityResult.cs" />
     <Compile Include="Api\Model\StandardSchema.cs" />
-    <Compile Include="Api\Service\FormSimilarityService.cs" />
+    <Compile Include="Internal\Service\DocumentStraightenerService.cs" />
+    <Compile Include="Internal\Service\FormSimilarityHelper.cs" />
     <Compile Include="Api\Service\IImageService.cs" />
+    <Compile Include="Internal\Service\DocumentCornersDetectionService.cs" />
+    <Compile Include="Internal\Service\DocumentPreparationService.cs" />
+    <Compile Include="Internal\Service\ImageHelper.cs" />
     <Compile Include="Api\Service\ImageService.cs" />
-    <Compile Include="Api\Service\RotationHelper.cs" />
+    <Compile Include="Internal\Service\RotationHelper.cs" />
     <Compile Include="Internal\Model\GrayscaleStandardImage.cs" />
     <Compile Include="Internal\Model\StandardImage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Internal\Formatting\ImageStandardizer.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Internal\Service\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Helper\Helper.csproj">
       <Project>{924c7e3c-66d6-4baf-896a-acc3ea6d9a92}</Project>
       <Name>Helper</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="x64\liblept172.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="x64\libtesseract304.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="x86\liblept172.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="x86\libtesseract304.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

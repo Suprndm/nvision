@@ -51,7 +51,7 @@ namespace NVision.Tests
             for (int i = 0; i < _testCases.Count; i++)
             {
                 _stopwatch.Start();
-                var image = _imageService.PrepareImage(_testCases[i]);
+                var image = _imageService.PrepareImageToOcr(_testCases[i]);
                 _stopwatch.Stop();
                 image.Save(path + $"CaseResult_{i+1}.jpg", ImageFormat.Jpeg);
             }

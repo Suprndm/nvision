@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace NVision.Api.Model
 {
-    public class CornersBuilder
+    public static class CornersBuilder
     {
         private const int _cornerSize = 30;
 
-        public Form BuildTopLeftCornerForm()
+        public static Form BuildTopLeftCornerForm()
         {
 
             var mask = new bool[_cornerSize, _cornerSize];
@@ -33,7 +33,7 @@ namespace NVision.Api.Model
             return form;
         }
 
-        public Form BuildTopRightCornerForm()
+        public static Form BuildTopRightCornerForm()
         {
             var mask = new bool[_cornerSize, _cornerSize];
 
@@ -56,7 +56,7 @@ namespace NVision.Api.Model
             return form;
         }
 
-        public Form BuildBottomLeftCornerForm()
+        public static Form BuildBottomLeftCornerForm()
         {
             var mask = new bool[_cornerSize, _cornerSize];
             for (int i = 0; i < _cornerSize; i++)
@@ -77,7 +77,7 @@ namespace NVision.Api.Model
             return form;
         }
 
-        public Form BuildBottomRightCornerForm()
+        public static Form BuildBottomRightCornerForm()
         {
             var mask = new bool[_cornerSize, _cornerSize];
             for (int i = 0; i < _cornerSize; i++)

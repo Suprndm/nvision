@@ -2,28 +2,58 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NVision.Api.Model;
 using NVision.Internal.Model;
 
-namespace NVision.Api.Service
+namespace NVision.Internal.Service
 {
-    internal class FormSimilarityService
+    internal class FormSimilarityHelper
     {
         private const double FuzzinessSpread = 1;
         private const double FuzzinessStrenght = 6;
-        private readonly double[,] _detectionMask;
+        private static double[,] _detectionMask;
         private const int Md = 3;
         private const int Size = 7;
-        public FormSimilarityService()
+
+        private static FormSimilarityHelper _instance;
+
+        private FormSimilarityHelper() { }
+
+        public static FormSimilarityHelper Instance
         {
-            _detectionMask = new double[Size, Size];
-            _detectionMask[Md, Md] = 1;
-            _detectionMask = Fuzzify(_detectionMask, Size);
-
-
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new FormSimilarityHelper();
+                    _detectionMask = new double[Size, Size];
+                    _detectionMask[Md, Md] = 1;
+                    _detectionMask = Fuzzify(_detectionMask, Size);
+                }
+                return _instance;
+            }
         }
+
+        public SimilarityResult SearchForForm(Form form, GrayscaleStandardImage image, Area area)
+        {
+            var scores = new List<SimilarityResult>();
+            for (int i = area.From.X; i < area.To.X; i++)
+            {
+                for (int j = area.From.Y; j < area.To.Y; j++)
+                {
+                    var position = new Point(i, j);
+                    scores.Add(new SimilarityResult(position,
+                        EvalFormSimilarity(form, image, position)));
+                }
+            }
+
+            var orderedScores = scores.OrderByDescending(x => x.Similarity);
+
+            var bestResult = orderedScores.First();
+
+            return bestResult;
+        }
+
         public double EvalFormSimilarity(Form form, GrayscaleStandardImage image, Point position)
         {
             double score = 0;
@@ -63,7 +93,7 @@ namespace NVision.Api.Service
         }
 
 
-        private double[,] Fuzzify(double[,] mask, int size)
+        private static double[,] Fuzzify(double[,] mask, int size)
         {
             var fuzinessSize = (int)(size * FuzzinessSpread);
 

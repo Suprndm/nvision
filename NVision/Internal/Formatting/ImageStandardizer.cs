@@ -3,9 +3,9 @@ using NVision.Internal.Model;
 
 namespace NVision.Internal.Formatting
 {
-    public class ImageStandardizer
+    public static class ImageStandardizer
     {
-        internal StandardImage ConvertToStandardImage(Bitmap bitmap)
+        internal static StandardImage ConvertToStandardImage(this Bitmap bitmap)
         {
             var imageData = new StandardImage
             {
@@ -30,7 +30,7 @@ namespace NVision.Internal.Formatting
             return imageData;
         }
 
-        internal GrayscaleStandardImage ConvertToGrayScaleStandardImage(Bitmap bitmap)
+        internal static GrayscaleStandardImage ConvertToGrayScaleStandardImage(this Bitmap bitmap)
         {
             var grayscaleImageData = new GrayscaleStandardImage
             {
@@ -51,7 +51,7 @@ namespace NVision.Internal.Formatting
             return grayscaleImageData;
         }
 
-        internal Bitmap ConvertToBitmap(StandardImage standardImage)
+        internal static Bitmap ConvertToBitmap(this StandardImage standardImage)
         {
             var bitmap = new Bitmap(standardImage.Width, standardImage.Height);
          
@@ -67,7 +67,7 @@ namespace NVision.Internal.Formatting
             return bitmap;
         }
 
-        internal GrayscaleStandardImage CreateGrayscaleStandardImage(int width, int height)
+        internal static GrayscaleStandardImage CreateGrayscaleStandardImage(int width, int height)
         {
             var standardImage = new GrayscaleStandardImage
             {
@@ -80,7 +80,7 @@ namespace NVision.Internal.Formatting
         }
 
 
-        internal StandardImage CreateStandardImage(int width, int height)
+        internal static StandardImage CreateStandardImage(int width, int height)
         {
             var standardImage = new StandardImage()
             {
@@ -94,7 +94,7 @@ namespace NVision.Internal.Formatting
             return standardImage;
         }
 
-        internal Bitmap ConvertToBitmap(GrayscaleStandardImage grayScaleStandardImage)
+        internal static Bitmap ConvertToBitmap(this GrayscaleStandardImage grayScaleStandardImage)
         {
             var bitmap = new Bitmap(grayScaleStandardImage.Width, grayScaleStandardImage.Height);
 
@@ -110,7 +110,7 @@ namespace NVision.Internal.Formatting
             return bitmap;
         }
 
-        internal StandardImage ConvertToStandardImage(GrayscaleStandardImage image)
+        internal static StandardImage ConvertToStandardImage(this GrayscaleStandardImage image)
         {
             var standardImage = new StandardImage
             {
@@ -134,7 +134,7 @@ namespace NVision.Internal.Formatting
             return standardImage;
         }
 
-        internal GrayscaleStandardImage ConvertToGrayScaleStandardImage(StandardImage image)
+        internal static GrayscaleStandardImage ConvertToGrayScaleStandardImage(this StandardImage image)
         {
             var standardImage = new GrayscaleStandardImage
             {
