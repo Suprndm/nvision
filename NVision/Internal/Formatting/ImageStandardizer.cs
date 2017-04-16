@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using NVision.Api.Model;
 using NVision.Internal.Model;
 
 namespace NVision.Internal.Formatting
@@ -14,6 +15,7 @@ namespace NVision.Internal.Formatting
                 R = new int[bitmap.Width, bitmap.Height],
                 G = new int[bitmap.Width, bitmap.Height],
                 B = new int[bitmap.Width, bitmap.Height],
+                Area = new Area(0,0, bitmap.Width, bitmap.Height)
             };
 
             for (int x = 0; x < bitmap.Width; x++)
@@ -37,6 +39,7 @@ namespace NVision.Internal.Formatting
                 Height = bitmap.Height,
                 Width = bitmap.Width,
                 C = new int[bitmap.Width, bitmap.Height],
+                Area = new Area(0, 0, bitmap.Width, bitmap.Height)
             };
 
             for (int x = 0; x < bitmap.Width; x++)
@@ -74,6 +77,7 @@ namespace NVision.Internal.Formatting
                 Height = height,
                 Width = width,
                 C = new int[width, height],
+                Area = new Area(0, 0, width, height)
             };
 
             return standardImage;
@@ -89,6 +93,7 @@ namespace NVision.Internal.Formatting
                 R = new int[width, height],
                 G = new int[width, height],
                 B = new int[width, height],
+                Area = new Area(0, 0, width, height)
             };
 
             return standardImage;
@@ -119,6 +124,7 @@ namespace NVision.Internal.Formatting
                 R = new int[image.Width, image.Height],
                 G = new int[image.Width, image.Height],
                 B = new int[image.Width, image.Height],
+                Area = image.Area
             };
 
             for (int x = 0; x < image.Width; x++)
@@ -141,6 +147,7 @@ namespace NVision.Internal.Formatting
                 Height = image.Height,
                 Width = image.Width,
                 C = new int[image.Width, image.Height],
+                Area = image.Area
             };
 
             for (int x = 0; x < image.Width; x++)

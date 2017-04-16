@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NVision.Internal.Model;
 
 namespace NVision.Api.Model
 {
@@ -28,7 +29,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize, "TopLeftCorner");
+            var form = new Form(mask, _cornerSize, FormType.TopLeft);
 
             return form;
         }
@@ -51,7 +52,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize, "TopRightCorner");
+            var form = new Form(mask, _cornerSize, FormType.TopRight);
 
             return form;
         }
@@ -72,7 +73,7 @@ namespace NVision.Api.Model
                     }
                 }
             }
-            var form = new Form(mask, _cornerSize, "BottomLeftCorner");
+            var form = new Form(mask, _cornerSize, FormType.BottomLeft);
 
             return form;
         }
@@ -94,7 +95,7 @@ namespace NVision.Api.Model
                 }
             }
 
-            var form = new Form(mask, _cornerSize, "BottomRightCorner");
+            var form = new Form(mask, _cornerSize, FormType.BottomRight);
 
             return form;
         }

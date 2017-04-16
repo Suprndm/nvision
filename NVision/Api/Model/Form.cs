@@ -4,14 +4,15 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NVision.Internal.Model;
 
 namespace NVision.Api.Model
 {
     public class Form
     {
-        public Form(bool[,] mask, int size, string name = null)
+        public Form(bool[,] mask, int size, FormType type)
         {
-            Name = name;
+            Type = type;
             Mask = mask;
             Height = size;
             Width = size;
@@ -34,7 +35,7 @@ namespace NVision.Api.Model
         public int Height { get; set; }
         public int Width { get; set; }
         public Point Center { get; set; }
-        public string Name { get; set; }
+        public FormType Type { get; set; }
         public IList<Point> Whites { get; set; }
 
         public override string ToString()

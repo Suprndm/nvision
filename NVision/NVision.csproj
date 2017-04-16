@@ -49,6 +49,7 @@
     <Compile Include="Api\Model\CornersBuilder.cs" />
     <Compile Include="Api\Model\Form.cs" />
     <Compile Include="Api\Model\Line.cs" />
+    <Compile Include="Internal\Model\ImagePart.cs" />
     <Compile Include="Internal\Model\SimilarityResult.cs" />
     <Compile Include="Api\Model\StandardSchema.cs" />
     <Compile Include="Internal\Service\DocumentStraightenerService.cs" />

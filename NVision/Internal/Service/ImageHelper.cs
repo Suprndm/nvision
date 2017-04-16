@@ -1,4 +1,8 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Threading.Tasks;
+using NVision.Api.Model;
 using NVision.Internal.Formatting;
 using NVision.Internal.Model;
 
@@ -115,7 +119,7 @@ namespace NVision.Internal.Service
             return newBitmap;
         }
 
-        internal static GrayscaleStandardImage Erosion(GrayscaleStandardImage image, int erosionCoeff)
+        internal static GrayscaleStandardImage Erosion(GrayscaleStandardImage image, double erosionCoeff)
         {
             var outputData = new GrayscaleStandardImage()
             {
@@ -124,23 +128,23 @@ namespace NVision.Internal.Service
                 C = new int[image.Width, image.Height],
             };
 
-            for (int x = 1; x < image.Width - 1; x++)
+            for (int x = 3; x < image.Width - 3; x++)
             {
-                for (int y = 1; y < image.Height - 1; y++)
+                for (int y = 3; y < image.Height - 3; y++)
                 {
                     int newValue = 0;
                     if (image.C[x, y] == 255)
                     {
                         int sum = 0;
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < 6; i++)
                         {
-                            for (int j = 0; j < 3; j++)
+                            for (int j = 0; j < 6; j++)
                             {
-                                sum += image.C[x + i - 1, y + j - 1] * (1 - erosionCoeff);
+                                sum += (int)(image.C[x + i - 3, y + j - 3] * (1 - erosionCoeff));
                             }
                         }
 
-                        if (sum > 4 * 255)
+                        if (sum > 10 * 255)
                             newValue = 255;
                     }
 
@@ -152,7 +156,7 @@ namespace NVision.Internal.Service
         }
 
 
-        internal static GrayscaleStandardImage Dilatation(GrayscaleStandardImage image, int dilatationCoeff)
+        internal static GrayscaleStandardImage Dilatation(GrayscaleStandardImage image, double dilatationCoeff)
         {
             var outputData = new GrayscaleStandardImage()
             {
@@ -161,23 +165,23 @@ namespace NVision.Internal.Service
                 C = new int[image.Width, image.Height],
             };
 
-            for (int x = 1; x < image.Width - 1; x++)
+            for (int x = 3; x < image.Width - 3; x++)
             {
-                for (int y = 1; y < image.Height - 1; y++)
+                for (int y = 3; y < image.Height - 3; y++)
                 {
                     int newValue = 0;
                     if (image.C[x, y] == 0)
                     {
                         int sum = 0;
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < 6; i++)
                         {
-                            for (int j = 0; j < 3; j++)
+                            for (int j = 0; j < 6; j++)
                             {
-                                sum += image.C[x + i - 1, y + j - 1] * (1 - dilatationCoeff);
+                                sum += (int)(image.C[x + i - 3, y + j - 3] * (1 - dilatationCoeff));
                             }
                         }
 
-                        if (sum > 4 * 255)
+                        if (sum > 15 * 255)
                             newValue = 255;
                     }
                     else newValue = 255;
@@ -251,6 +255,17 @@ namespace NVision.Internal.Service
             }
 
             return image;
+        }
+
+        internal static IList<Area> SplitIntoFour(this Area area)
+        {
+            return new List<Area>
+            {
+                new Area(area.From.X, area.From.Y, area.To.X/2, area.To.Y/2),
+                new Area(area.To.X/2, area.From.Y, area.To.X, area.To.Y/2),
+                new Area(area.To.X/2, area.To.Y/2, area.To.X, area.To.Y),
+                new Area(area.From.X, area.To.Y/2, area.To.X/2, area.To.Y)
+            };
         }
 
         private  static int SafeAdd(int number, int addition)

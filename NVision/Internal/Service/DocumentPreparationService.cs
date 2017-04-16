@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using NVision.Internal.Model;
 
 namespace NVision.Internal.Service
@@ -74,46 +73,47 @@ namespace NVision.Internal.Service
 
         public GrayscaleStandardImage UniformizeDocument(GrayscaleStandardImage image)
         {
-            image = ImageHelper.Erosion(image, 0);
-            image = ImageHelper.Dilatation(image, 0);
-            image = ImageHelper.Erosion(image, 0);
-            image = ImageHelper.Dilatation(image, 0);
-            image = ImageHelper.Erosion(image, 0);
-            image = ImageHelper.Dilatation(image, 0);
-            image = ImageHelper.Erosion(image, 0);
-            image = ImageHelper.Dilatation(image, 0);
-            image = ImageHelper.Erosion(image, 0);
-            image = ImageHelper.Dilatation(image, 0);
 
-            var maskSize = 50;
+             image = ImageHelper.Erosion(image, 0);
+            image = ImageHelper.Dilatation(image, 0);
+             image = ImageHelper.Erosion(image, 0);
+             image = ImageHelper.Dilatation(image, 0);
+             image = ImageHelper.Erosion(image, 0);
+             image = ImageHelper.Dilatation(image, 0);
 
-            for (int x = maskSize; x < image.Width - maskSize; x++)
-            {
-                for (int y = maskSize; y < image.Height - maskSize; y++)
-                {
-                    int sum = 0;
-                    for (int i = 0; i < maskSize; i++)
-                    {
-                        for (int j = 0; j < maskSize; j++)
-                        {
-                            if (i == 0 || j == 0 || i == maskSize - 1 || j == maskSize - 1)
-                            {
-                                sum += image.C[x - (i - maskSize / 2), y - (j - maskSize / 2)];
+            //image = ImageHelper.Dilatation(image, 1);
+            //image = ImageHelper.Dilatation(image, 1);
+            //image = ImageHelper.Erosion(image, 0.5);
 
-                            }
-                        }
-                    }
+            //var maskSize = 50;
 
-                    if (image.C[x, y] == 0 && (maskSize - 1) * 4 * 255 == sum)
-                    {
-                        image.C[x, y] = 255;
-                    }
-                    else if (image.C[x, y] == 255 && sum == 0)
-                    {
-                        image.C[x, y] = 0;
-                    }
-                }
-            }
+            //for (int x = maskSize; x < image.Width - maskSize; x++)
+            //{
+            //    for (int y = maskSize; y < image.Height - maskSize; y++)
+            //    {
+            //        int sum = 0;
+            //        for (int i = 0; i < maskSize; i++)
+            //        {
+            //            for (int j = 0; j < maskSize; j++)
+            //            {
+            //                if (i == 0 || j == 0 || i == maskSize - 1 || j == maskSize - 1)
+            //                {
+            //                    sum += image.C[x - (i - maskSize / 2), y - (j - maskSize / 2)];
+
+            //                }
+            //            }
+            //        }
+
+            //        if (image.C[x, y] == 0 && (maskSize - 1) * 4 * 255 == sum)
+            //        {
+            //            image.C[x, y] = 255;
+            //        }
+            //        else if (image.C[x, y] == 255 && sum == 0)
+            //        {
+            //            image.C[x, y] = 0;
+            //        }
+            //    }
+            //}
 
             return image;
         }

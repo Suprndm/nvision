@@ -12,7 +12,7 @@ namespace NVision.Internal.Service
         internal IList<Point> GetCorners(GrayscaleStandardImage image)
         {
             var points = new List<Point>();
-            var pointsDictionnary = new Dictionary<string, Point>();
+            var pointsDictionnary = new Dictionary<FormType, Point>();
             var corners = new Dictionary<Form, Area>();
 
             image = ImageHelper.Laplacien(image);
@@ -23,12 +23,12 @@ namespace NVision.Internal.Service
             corners.Add(CornersBuilder.BuildBottomLeftCornerForm(), new Area(0, image.Height / 2, image.Width / 2, image.Height));
 
 
-            Parallel.ForEach(corners.Keys, (form) => pointsDictionnary.Add(form.Name, FormSimilarityHelper.Instance.SearchForForm(form, image, corners[form]).Position));
+            Parallel.ForEach(corners.Keys, (form) => pointsDictionnary.Add(form.Type, FormSimilarityHelper.Instance.SearchForForm(form, image, corners[form]).Position));
 
-            points.Add(pointsDictionnary["TopLeftCorner"]);
-            points.Add(pointsDictionnary["TopRightCorner"]);
-            points.Add(pointsDictionnary["BottomRightCorner"]);
-            points.Add(pointsDictionnary["BottomLeftCorner"]);
+            points.Add(pointsDictionnary[FormType.TopLeft]);
+            points.Add(pointsDictionnary[FormType.TopRight]);
+            points.Add(pointsDictionnary[FormType.BottomRight]);
+            points.Add(pointsDictionnary[FormType.BottomLeft]);
 
             return points;
         }
