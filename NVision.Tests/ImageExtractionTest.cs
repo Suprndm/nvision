@@ -155,32 +155,32 @@ namespace NVision.Tests
                 _stopwatch.Reset();
                 grayImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
-                // Step Corner Detection
-                step = Operation.ImageCornerDetection;
-                _stopwatch.Start();
-                var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
-                _stopwatch.Stop();
-                report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
-                _stopwatch.Reset();
-                _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                //// Step Corner Detection
+                //step = Operation.ImageCornerDetection;
+                //_stopwatch.Start();
+                //var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
+                //_stopwatch.Stop();
+                //report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
+                //_stopwatch.Reset();
+                //_documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
-                var originalRatio = targetStandardImage.Height / grayImage.Height;
-                IList<Point> originalCornersCoordinates = new List<Point>();
-                foreach (var corner in corners)
-                {
-                    originalCornersCoordinates.Add(new Point(corner.X * originalRatio, corner.Y * originalRatio));
-                }
+                //var originalRatio = targetStandardImage.Height / grayImage.Height;
+                //IList<Point> originalCornersCoordinates = new List<Point>();
+                //foreach (var corner in corners)
+                //{
+                //    originalCornersCoordinates.Add(new Point(corner.X * originalRatio, corner.Y * originalRatio));
+                //}
 
-                // Step Straightening
-                step = Operation.ImageStraightening;
-                _stopwatch.Start();
-                var straightenImage = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
-                _stopwatch.Stop();
-                report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
-                _stopwatch.Reset();
+                //// Step Straightening
+                //step = Operation.ImageStraightening;
+                //_stopwatch.Start();
+                //var straightenImage = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
+                //_stopwatch.Stop();
+                //report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
+                //_stopwatch.Reset();
 
-                _stopwatch.Stop();
-                straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i + 1}.jpg", ImageFormat.Jpeg);
+                //_stopwatch.Stop();
+                //straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i + 1}.jpg", ImageFormat.Jpeg);
             }
 
             long totalExecutionTime = 0;

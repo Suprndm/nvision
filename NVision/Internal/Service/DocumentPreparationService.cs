@@ -12,7 +12,7 @@ namespace NVision.Internal.Service
         public GrayscaleStandardImage IsolateDocument(StandardImage image, IDictionary<Point, int> svPikes )
         {
             //var documentColor = GetDocumentColor(image);
-            var grayImage = DocumentEligibilityMap(image);
+            var grayImage = SvPikeHat(image, svPikes);
           //  grayImage = ImageHelper.Hat(grayImage, 20);
           // grayImage = UniformizeDocument(grayImage);
             return grayImage;
@@ -26,16 +26,20 @@ namespace NVision.Internal.Service
             if (svPikes.Count == 1)
             {
                 saturationCutoff = svPikes.Single().Key.X+30;
-                brightnessCutoff = svPikes.Single().Key.X-30;
-            } else if (svPikes.Count == 1)
+                brightnessCutoff = svPikes.Single().Key.Y-30;
+            } else if (svPikes.Count == 2)
             {
                 saturationCutoff = (svPikes.First().Key.X + svPikes.Last().Key.X)/2;
                 brightnessCutoff = (svPikes.First().Key.Y + svPikes.Last().Key.Y)/2;
             }
             else
             {
-                saturationCutoff = 37;
-                brightnessCutoff = 50;
+                var pikesList = svPikes.ToList();
+                pikesList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
+                var pike1 = pikesList[0];
+                var pike2 = pikesList[1];
+                saturationCutoff = (pike1.Key.X + pike2.Key.X) / 2;
+                brightnessCutoff = (pike1.Key.Y + pike2.Key.Y) / 2;
             }
 
             for (int i = 0; i < image.Width; i++)
@@ -47,8 +51,8 @@ namespace NVision.Internal.Service
 
                     var saturation = hsl.S*100;
                     var brightness = hsl.V*100;
-                    if (saturation < saturationCutoff && brightnessCutoff > brightness)
-                        grayImage.C[i, j] = 1;
+                    if (saturation < saturationCutoff && brightness  > brightnessCutoff)
+                        grayImage.C[i, j] = 255;
                     else
                         grayImage.C[i, j] = 0;
                 }

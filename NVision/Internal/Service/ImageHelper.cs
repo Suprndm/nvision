@@ -130,7 +130,7 @@ namespace NVision.Internal.Service
 
         internal static IDictionary<Point, int> GetSvPikes(IDictionary<Point, int> data)
         {
-            var g = 3;
+            var g = 30;
             var pikes = new Dictionary<Point, int>();
             var dataList = data.ToList();
             dataList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
@@ -147,7 +147,7 @@ namespace NVision.Internal.Service
                         var distance =
                             Math.Sqrt(Math.Pow(pike.Key.X - element.Key.X, 2) + Math.Pow(pike.Key.Y - element.Key.Y, 2));
 
-                        forces.Add(pike.Key, (double)pike.Value / (distance) * g);
+                        forces.Add(pike.Key, (double)pike.Value / (distance * distance) * g);
                     }
 
                     var strongestForcePike = forces.Aggregate((l, r) => l.Value > r.Value ? l : r);
