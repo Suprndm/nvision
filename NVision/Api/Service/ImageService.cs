@@ -38,9 +38,9 @@ namespace NVision.Api.Service
         {
             bitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
             var standardImage = bitmap.ConvertToStandardImage();
-            var grayImage = _documentPreparationService.IsolateDocument(standardImage);
+            var grayImage = _documentPreparationService.DocumentEligibilityMap(standardImage);
 
-            var corners = _documentCornersDetectionService.GetCorners(grayImage);
+            var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
 
             var coloredStandardImage = grayImage.ConvertToStandardImage();
 

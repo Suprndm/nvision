@@ -9,13 +9,11 @@ namespace NVision.Internal.Service
 {
     internal class DocumentCornersDetectionService
     {
-        internal IList<Point> GetCorners(GrayscaleStandardImage image)
+        internal IList<Point> GetCorners(StandardImage image, GrayscaleStandardImage edges)
         {
             var points = new List<Point>();
             var pointsDictionnary = new Dictionary<FormType, Point>();
             var corners = new Dictionary<Form, Area>();
-
-            image = ImageHelper.Laplacien(image);
 
             corners.Add(CornersBuilder.BuildTopLeftCornerForm(), new Area(0, 0, image.Width / 2, image.Height / 2));
             corners.Add(CornersBuilder.BuildTopRightCornerForm(), new Area(image.Width / 2, 0, image.Width, image.Height / 2));
@@ -23,7 +21,7 @@ namespace NVision.Internal.Service
             corners.Add(CornersBuilder.BuildBottomLeftCornerForm(), new Area(0, image.Height / 2, image.Width / 2, image.Height));
 
 
-            Parallel.ForEach(corners.Keys, (form) => pointsDictionnary.Add(form.Type, FormSimilarityHelper.Instance.SearchForForm(form, image, corners[form]).Position));
+            Parallel.ForEach(corners.Keys, (form) => pointsDictionnary.Add(form.Type, FormSimilarityHelper.Instance.SearchForCorner(form, image, edges, corners[form]).Position));
 
             points.Add(pointsDictionnary[FormType.TopLeft]);
             points.Add(pointsDictionnary[FormType.TopRight]);
@@ -33,11 +31,8 @@ namespace NVision.Internal.Service
             return points;
         }
 
-        public StandardImage GetCornersImageResult(GrayscaleStandardImage grayImage, IList<Point> corners)
+        public StandardImage GetCornersImageResult(StandardImage coloredStandardImage, IList<Point> corners)
         {
-            grayImage = ImageHelper.Laplacien(grayImage);
-            var coloredStandardImage = grayImage.ConvertToStandardImage();
-
             foreach (var point in corners)
             {
                 coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);

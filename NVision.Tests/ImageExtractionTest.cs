@@ -39,6 +39,73 @@ namespace NVision.Tests
             };
         }
 
+
+        [Test]
+        public void SpectralAnalysis()
+        {
+            string directory = AppDomain.CurrentDomain.BaseDirectory;
+            var path = Path.Combine(directory, $"Reports/Analysis tests/{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}/");
+            Directory.CreateDirectory(path);
+            var pikes = "";
+            for (int i = 0; i < _testCases.Count; i++)
+            {
+                _stopwatch.Start();
+                var bitmap = _testCases[i];
+                var reducedBitmap = bitmap.ReduceSize((double) 500/Math.Max(bitmap.Width, bitmap.Height));
+                var standardImage = reducedBitmap.ConvertToStandardImage();
+                var saturationMap = ImageHelper.GetSaturationMap(standardImage);
+                var brightnessMap = ImageHelper.GetBrightnessMap(standardImage);
+                var brightnessPikes = ImageHelper.GetPikes(brightnessMap);
+                var saturationPikes = ImageHelper.GetPikes(saturationMap);
+
+                var svMap = ImageHelper.GetSVMap(standardImage);
+                var svPikes = ImageHelper.GetSvPikes(svMap);
+
+                var hueMap = ImageHelper.GetHueMAp(standardImage);
+                pikes += $"Case {i+1}: \n\r svPikes:{svPikes.Count} \n\r ";
+                //  string saturationReport = "Level;SaturationFrequence;SaturationPikes;BrightnessFrequence;BrightnessPikes\n";
+                //for (int j = 0; j <= 99; j++)
+                //{
+                //    var saturationFrequency = 0;
+                //    var brightnessFrequency = 0;
+                //    var saturationPikesElements = 0;
+                //    var brightnessPikesElements = 0;
+
+                //    if (brightnessMap.ContainsKey(j))
+                //        brightnessFrequency = brightnessMap[j] + 1;
+
+                //    if (saturationMap.ContainsKey(j))
+                //        saturationFrequency = saturationMap[j];
+
+                //    if (brightnessPikes.ContainsKey(j))
+                //        brightnessPikesElements = brightnessPikes[j] + 1;
+
+                //    if (saturationPikes.ContainsKey(j))
+                //        saturationPikesElements = saturationPikes[j] + 1;
+
+                //    saturationReport += $"{j};{saturationFrequency};{saturationPikesElements};{brightnessFrequency};{brightnessPikesElements}\n";
+                //}
+
+                var svReport = "Saturation;Brightness;Frequency\n";
+                for (int j = 0; j < 100; j++)
+                {
+                    for (int k = 0; k < 100; k++)
+                    {
+                        var point = new Point(j, k);
+                        var svFrequency = 0;
+                        if(svMap.ContainsKey(point))
+                            svFrequency = svMap[point];
+
+                        svReport += $"{j};{k};{svFrequency}\n";
+                    }
+                }
+
+                File.WriteAllText(path + $"SpectralAnalysis{i + 1}.csv", svReport);
+            }
+                  File.WriteAllText(path + $"pikes.txt", pikes);
+        }
+
+
         [Test]
         public void Test()
         {
@@ -50,7 +117,7 @@ namespace NVision.Tests
             {
                 Date = DateTime.UtcNow,
                 ImagesCount = _testCases.Count,
-                Results = new Dictionary<Operation, OperationTestResult>() 
+                Results = new Dictionary<Operation, OperationTestResult>()
             };
 
             foreach (Operation operation in Enum.GetValues(typeof(Operation)))
@@ -80,44 +147,46 @@ namespace NVision.Tests
                 // Step preparation
                 step = Operation.ImagePreparation;
                 _stopwatch.Start();
-                var grayImage = _documentPreparationService.IsolateDocument(standardImage);
+                var svMap = ImageHelper.GetSVMap(standardImage);
+                var svPikes = ImageHelper.GetSvPikes(svMap);
+                var grayImage = _documentPreparationService.IsolateDocument(standardImage, svPikes);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
+                grayImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 // Step Corner Detection
                 step = Operation.ImageCornerDetection;
                 _stopwatch.Start();
-                var corners = _documentCornersDetectionService.GetCorners(grayImage);
+                var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
+                _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
-                var originalRatio = targetStandardImage.Height/grayImage.Height;
+                var originalRatio = targetStandardImage.Height / grayImage.Height;
                 IList<Point> originalCornersCoordinates = new List<Point>();
                 foreach (var corner in corners)
                 {
-                    originalCornersCoordinates.Add(new Point(corner.X* originalRatio, corner.Y * originalRatio ));
+                    originalCornersCoordinates.Add(new Point(corner.X * originalRatio, corner.Y * originalRatio));
                 }
 
-                    // Step Straightening
+                // Step Straightening
                 step = Operation.ImageStraightening;
                 _stopwatch.Start();
-                var straightenImage  = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
+                var straightenImage = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
 
                 _stopwatch.Stop();
-                grayImage.ConvertToBitmap().Save(path + $"PreparationResult_{i+1}.jpg", ImageFormat.Jpeg);
-               _documentCornersDetectionService.GetCornersImageResult(grayImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i+1}.jpg", ImageFormat.Jpeg);
-                straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i+1}.jpg", ImageFormat.Jpeg);
+                straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i + 1}.jpg", ImageFormat.Jpeg);
             }
 
             long totalExecutionTime = 0;
             foreach (var op in report.Results.Keys.ToList())
             {
-                report.Results[op].ExecutionTimePerImageMs = report.Results[op].ExecutionTimePerImageMs/_testCases.Count;
+                report.Results[op].ExecutionTimePerImageMs = report.Results[op].ExecutionTimePerImageMs / _testCases.Count;
                 totalExecutionTime += report.Results[op].ExecutionTimePerImageMs;
             }
 

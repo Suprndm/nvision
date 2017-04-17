@@ -21,10 +21,7 @@ namespace NVision.Api.Model
                 {
                     if (i >= _cornerSize / 2 && j >= _cornerSize / 2)
                     {
-                        if (i == _cornerSize / 2 || j == _cornerSize / 2)
-                        {
                             mask[i, j] = true;
-                        }
                     }
                 }
             }
@@ -44,10 +41,7 @@ namespace NVision.Api.Model
                 {
                     if (i <= _cornerSize / 2 && j >= _cornerSize / 2)
                     {
-                        if (i == _cornerSize / 2 || j == _cornerSize / 2)
-                        {
                             mask[i, j] = true;
-                        }
                     }
                 }
             }
@@ -66,10 +60,7 @@ namespace NVision.Api.Model
                 {
                     if (i >= _cornerSize / 2 && j <= _cornerSize / 2)
                     {
-                        if (i == _cornerSize / 2 || j == _cornerSize / 2)
-                        {
                             mask[i, j] = true;
-                        }
                     }
                 }
             }
@@ -87,10 +78,7 @@ namespace NVision.Api.Model
                 {
                     if (i <= _cornerSize / 2 && j <= _cornerSize / 2)
                     {
-                        if (i == _cornerSize / 2 || j == _cornerSize / 2)
-                        {
                             mask[i, j] = true;
-                        }
                     }
                 }
             }

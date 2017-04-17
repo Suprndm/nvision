@@ -1,17 +1,78 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using ColorMine.ColorSpaces;
+using NVision.Internal.Formatting;
 using NVision.Internal.Model;
 
 namespace NVision.Internal.Service
 {
     internal class DocumentPreparationService
     {
-        public GrayscaleStandardImage IsolateDocument(StandardImage image)
+        public GrayscaleStandardImage IsolateDocument(StandardImage image, IDictionary<Point, int> svPikes )
         {
-            var documentColor = GetDocumentColor(image);
-            var grayImage = ImageHelper.ExactHat(image, documentColor, 50);
-            grayImage = UniformizeDocument(grayImage);
+            //var documentColor = GetDocumentColor(image);
+            var grayImage = DocumentEligibilityMap(image);
+          //  grayImage = ImageHelper.Hat(grayImage, 20);
+          // grayImage = UniformizeDocument(grayImage);
+            return grayImage;
+        }
+
+        public GrayscaleStandardImage SvPikeHat(StandardImage image, IDictionary<Point, int> svPikes)
+        {
+            var grayImage = image.ConvertToGrayScaleStandardImage();
+            var saturationCutoff = 0;
+            var brightnessCutoff = 0;
+            if (svPikes.Count == 1)
+            {
+                saturationCutoff = svPikes.Single().Key.X+30;
+                brightnessCutoff = svPikes.Single().Key.X-30;
+            } else if (svPikes.Count == 1)
+            {
+                saturationCutoff = (svPikes.First().Key.X + svPikes.Last().Key.X)/2;
+                brightnessCutoff = (svPikes.First().Key.Y + svPikes.Last().Key.Y)/2;
+            }
+            else
+            {
+                saturationCutoff = 37;
+                brightnessCutoff = 50;
+            }
+
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    var myRgb = new Rgb {R = image.R[i,j], G = image.G[i, j], B = image.B[i, j] };
+                    var hsl = myRgb.To<Hsv>();
+
+                    var saturation = hsl.S*100;
+                    var brightness = hsl.V*100;
+                    if (saturation < saturationCutoff && brightnessCutoff > brightness)
+                        grayImage.C[i, j] = 1;
+                    else
+                        grayImage.C[i, j] = 0;
+                }
+            }
+
+            return grayImage;
+        }
+
+        public GrayscaleStandardImage DocumentEligibilityMap(StandardImage image)
+        {
+            var grayImage = image.ConvertToGrayScaleStandardImage();
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    bool stop = false;
+                    if (i == 114 && j == 50)
+                        stop = true;
+                    Color pixelColor = Color.FromArgb(1, image.R[i, j], image.G[i, j], image.B[i, j]);
+
+                    grayImage.C[i, j] = pixelColor.CouldBeDocumentColor() == true ? 255 : 0;
+                }
+            }
+
             return grayImage;
         }
 
