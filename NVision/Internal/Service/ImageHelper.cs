@@ -88,7 +88,7 @@ namespace NVision.Internal.Service
                     var hsl = myRgb.To<Hsv>();
                     var saturation = (int)(hsl.S * 100);
                     var brightness = (int)(hsl.V * 100);
-                    var point = new Point(saturation,brightness);
+                    var point = new Point(saturation, brightness);
 
                     if (map.ContainsKey(point))
                         map[point]++;
@@ -126,6 +126,45 @@ namespace NVision.Internal.Service
             return map;
         }
 
+
+        internal static SvPike GetDocumentPike(IDictionary<Point, int> data)
+        {
+            var g = 50;
+            var pikes = new Dictionary<SvPike, int>();
+            var dataList = data.ToList();
+            dataList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
+
+            foreach (var element in dataList)
+            {
+                if (pikes.Count == 0)
+                    pikes.Add(new SvPike() { Saturation = element.Key.X, Brightness = element.Key.Y, PixelsImpactedCount = 1 }, 1);
+                else
+                {
+                    var forces = new Dictionary<SvPike, double>();
+                    foreach (var pike in pikes)
+                    {
+                        var distance =
+                            Math.Sqrt(Math.Pow(pike.Key.Saturation - element.Key.X, 2) + Math.Pow(pike.Key.Brightness - element.Key.Y, 2));
+
+                        forces.Add(pike.Key, 1 / (distance) * g);
+                    }
+
+                    var strongestForcePike = forces.Aggregate((l, r) => l.Value > r.Value ? l : r);
+                    if (strongestForcePike.Value > 1)
+                    {
+                        pikes[strongestForcePike.Key] += 1;
+                        strongestForcePike.Key.PixelsImpactedCount++;
+                        strongestForcePike.Key.SaturationRay = Math.Max(strongestForcePike.Key.SaturationRay, Math.Abs(strongestForcePike.Key.Saturation - element.Key.X));
+                        strongestForcePike.Key.BrightnessRay = Math.Max(strongestForcePike.Key.BrightnessRay, Math.Abs(strongestForcePike.Key.Brightness - element.Key.Y));
+                    }
+                    else
+                        pikes.Add(new SvPike() { Saturation = element.Key.X, Brightness = element.Key.Y, PixelsImpactedCount = 1 }, 1);
+                }
+            }
+
+            var bestPike = pikes.Aggregate((l, r) => l.Value * (100 - l.Key.Saturation) * l.Key.Brightness > r.Value * (100 - r.Key.Saturation) * r.Key.Brightness ? l : r);
+            return bestPike.Key;
+        }
 
 
         internal static IDictionary<Point, int> GetSvPikes(IDictionary<Point, int> data)
@@ -177,12 +216,12 @@ namespace NVision.Internal.Service
                     foreach (var pike in pikes)
                     {
                         var distance = Math.Abs(pike.Key - element.Key);
-                        forces.Add(pike.Key, (double)pike.Value / (distance* distance) * g);
+                        forces.Add(pike.Key, (double)pike.Value / (distance * distance) * g);
                     }
-                    
+
                     var strongestForcePike = forces.Aggregate((l, r) => l.Value > r.Value ? l : r);
                     if (strongestForcePike.Value > 1) pikes[strongestForcePike.Key] += 1;
-                    else 
+                    else
                         pikes.Add(element.Key, 1);
                 }
             }
@@ -302,6 +341,19 @@ namespace NVision.Internal.Service
             return hueDifference + saturationDifference + brightnessDifference;
         }
 
+        internal static bool IsInPike(this Color c1, SvPike pike)
+        {
+            var myRgb = new Rgb { R = c1.R, G = c1.G, B = c1.B };
+            var hsl = myRgb.To<Hsv>();
+
+            var saturation = hsl.S * 100;
+            var brightness = hsl.V * 100;
+            if (Math.Abs(pike.Saturation - saturation) < pike.SaturationRay && Math.Abs(pike.Brightness - brightness) < pike.BrightnessRay)
+                return true;
+
+            return false;
+        }
+
         internal static bool CouldBeDocumentColor(this Color c1)
         {
             var myRgb = new Rgb { R = c1.R, G = c1.G, B = c1.B };
@@ -322,6 +374,162 @@ namespace NVision.Internal.Service
 
             return distanceToGray;
         }
+
+        internal static GrayscaleStandardImage SaturationLaplacien(StandardImage image)
+        {
+            var outputData = new GrayscaleStandardImage()
+            {
+                Height = image.Height,
+                Width = image.Width,
+                C = new int[image.Width, image.Height],
+            };
+
+            var dist = 8;
+            var mediumDist = 2;
+            var smallDist = 1;
+            for (int x = dist; x < image.Width - dist; x++)
+            {
+                for (int y = dist; y < image.Height - dist; y++)
+                {
+
+                    var sx1 = (new Rgb { R = image.R[x - dist, y], G = image.G[x - dist, y], B = image.B[x - dist, y] }).To<Hsv>().S * 100;
+                    var sx2 = (new Rgb { R = image.R[x + dist, y], G = image.G[x + dist, y], B = image.B[x + dist, y] }).To<Hsv>().S * 100;
+
+                    var sy1 = (new Rgb { R = image.R[x, y - dist], G = image.G[x, y - dist], B = image.B[x, y - dist] }).To<Hsv>().S * 100;
+                    var sy2 = (new Rgb { R = image.R[x, y + dist], G = image.G[x, y + dist], B = image.B[x, y + dist] }).To<Hsv>().S * 100;
+
+                    var sdiag1 = (new Rgb { R = image.R[x - dist, y - dist], G = image.G[x - dist, y - dist], B = image.B[x - dist, y - dist] }).To<Hsv>().S * 100;
+                    var sdiag2 = (new Rgb { R = image.R[x + dist, y + dist], G = image.G[x + dist, y + dist], B = image.B[x + dist, y + dist] }).To<Hsv>().S * 100;
+
+                    var sdiag3 = (new Rgb { R = image.R[x + dist, y - dist], G = image.G[x + dist, y - dist], B = image.B[x + dist, y - dist] }).To<Hsv>().S * 100;
+                    var sdiag4 = (new Rgb { R = image.R[x - dist, y + dist], G = image.G[x - dist, y + dist], B = image.B[x - dist, y + dist] }).To<Hsv>().S * 100;
+
+                    var ssx1 = (new Rgb { R = image.R[x - smallDist, y], G = image.G[x - smallDist, y], B = image.B[x - smallDist, y] }).To<Hsv>().S * 100;
+                    var ssx2 = (new Rgb { R = image.R[x + smallDist, y], G = image.G[x + smallDist, y], B = image.B[x + smallDist, y] }).To<Hsv>().S * 100;
+
+                    var ssy1 = (new Rgb { R = image.R[x, y - smallDist], G = image.G[x, y - smallDist], B = image.B[x, y - smallDist] }).To<Hsv>().S * 100;
+                    var ssy2 = (new Rgb { R = image.R[x, y + smallDist], G = image.G[x, y + smallDist], B = image.B[x, y + smallDist] }).To<Hsv>().S * 100;
+
+                    var ssdiag1 = (new Rgb { R = image.R[x - smallDist, y - smallDist], G = image.G[x - smallDist, y - smallDist], B = image.B[x - smallDist, y - smallDist] }).To<Hsv>().S * 100;
+                    var ssdiag2 = (new Rgb { R = image.R[x + smallDist, y + smallDist], G = image.G[x + smallDist, y + smallDist], B = image.B[x + smallDist, y + smallDist] }).To<Hsv>().S * 100;
+
+                    var ssdiag3 = (new Rgb { R = image.R[x + smallDist, y - smallDist], G = image.G[x + smallDist, y - smallDist], B = image.B[x + smallDist, y - smallDist] }).To<Hsv>().S * 100;
+                    var ssdiag4 = (new Rgb { R = image.R[x - smallDist, y + smallDist], G = image.G[x - smallDist, y + smallDist], B = image.B[x - smallDist, y + smallDist] }).To<Hsv>().S * 100;
+
+                    var msx1 = (new Rgb { R = image.R[x - mediumDist, y], G = image.G[x - mediumDist, y], B = image.B[x - mediumDist, y] }).To<Hsv>().S * 100;
+                    var msx2 = (new Rgb { R = image.R[x + mediumDist, y], G = image.G[x + mediumDist, y], B = image.B[x + mediumDist, y] }).To<Hsv>().S * 100;
+
+                    var msy1 = (new Rgb { R = image.R[x, y - mediumDist], G = image.G[x, y - mediumDist], B = image.B[x, y - mediumDist] }).To<Hsv>().S * 100;
+                    var msy2 = (new Rgb { R = image.R[x, y + mediumDist], G = image.G[x, y + mediumDist], B = image.B[x, y + mediumDist] }).To<Hsv>().S * 100;
+
+                    var msdiag1 = (new Rgb { R = image.R[x - mediumDist, y - mediumDist], G = image.G[x - mediumDist, y - mediumDist], B = image.B[x - mediumDist, y - mediumDist] }).To<Hsv>().S * 100;
+                    var msdiag2 = (new Rgb { R = image.R[x + mediumDist, y + mediumDist], G = image.G[x + mediumDist, y + mediumDist], B = image.B[x + mediumDist, y + mediumDist] }).To<Hsv>().S * 100;
+
+                    var msdiag3 = (new Rgb { R = image.R[x + mediumDist, y - mediumDist], G = image.G[x + mediumDist, y - mediumDist], B = image.B[x + mediumDist, y - mediumDist] }).To<Hsv>().S * 100;
+                    var msdiag4 = (new Rgb { R = image.R[x - mediumDist, y + mediumDist], G = image.G[x - mediumDist, y + mediumDist], B = image.B[x - mediumDist, y + mediumDist] }).To<Hsv>().S * 100;
+                    var results = new List<double>();
+
+                    results.Add(Math.Abs(sx1 - sx2) * Math.Abs(ssx1 - ssx2) * Math.Abs(msx1 - msx2));
+                    results.Add(Math.Abs(sy1 - sy2) * Math.Abs(ssy1 - ssy2) * Math.Abs(msy1 - msy2));
+                    results.Add(Math.Abs(sdiag1 - sdiag2) * Math.Abs(ssdiag1 - ssdiag2) * Math.Abs(msdiag1 - msdiag2));
+                    results.Add(Math.Abs(sdiag3 - sdiag4) * Math.Abs(ssdiag3 - ssdiag4) * Math.Abs(msdiag3 - msdiag4));
+
+
+                    outputData.C[x, y] = SafeAdd(0, (int)results.Max() / 20);
+                }
+            }
+
+            return outputData;
+        }
+
+        internal static GrayscaleStandardImage Average(GrayscaleStandardImage image1, GrayscaleStandardImage image2)
+        {
+            var outputData = new GrayscaleStandardImage()
+            {
+                Height = image1.Height,
+                Width = image1.Width,
+                C = new int[image1.Width, image1.Height],
+            };
+
+            for (int x = 0; x < image1.Width; x++)
+            {
+                for (int y = 0; y < image1.Height; y++)
+                {
+                    outputData.C[x, y] = (image1.C[x, y] + image2.C[x, y]) / 2;
+                }
+            }
+
+            return outputData;
+        }
+
+        internal static
+            GrayscaleStandardImage BrightnessLaplacien(StandardImage image)
+        {
+            var outputData = new GrayscaleStandardImage()
+            {
+                Height = image.Height,
+                Width = image.Width,
+                C = new int[image.Width, image.Height],
+            };
+
+            var dist = 8;
+            var mediumDist = 2;
+            var smallDist = 1;
+            for (int x = dist; x < image.Width - dist; x++)
+            {
+                for (int y = dist; y < image.Height - dist; y++)
+                {
+
+                    var sx1 = (new Rgb { R = image.R[x - dist, y], G = image.G[x - dist, y], B = image.B[x - dist, y] }).To<Hsv>().V * 100;
+                    var sx2 = (new Rgb { R = image.R[x + dist, y], G = image.G[x + dist, y], B = image.B[x + dist, y] }).To<Hsv>().V * 100;
+
+                    var sy1 = (new Rgb { R = image.R[x, y - dist], G = image.G[x, y - dist], B = image.B[x, y - dist] }).To<Hsv>().V * 100;
+                    var sy2 = (new Rgb { R = image.R[x, y + dist], G = image.G[x, y + dist], B = image.B[x, y + dist] }).To<Hsv>().V * 100;
+
+                    var sdiag1 = (new Rgb { R = image.R[x - dist, y - dist], G = image.G[x - dist, y - dist], B = image.B[x - dist, y - dist] }).To<Hsv>().V * 100;
+                    var sdiag2 = (new Rgb { R = image.R[x + dist, y + dist], G = image.G[x + dist, y + dist], B = image.B[x + dist, y + dist] }).To<Hsv>().V * 100;
+
+                    var sdiag3 = (new Rgb { R = image.R[x + dist, y - dist], G = image.G[x + dist, y - dist], B = image.B[x + dist, y - dist] }).To<Hsv>().V * 100;
+                    var sdiag4 = (new Rgb { R = image.R[x - dist, y + dist], G = image.G[x - dist, y + dist], B = image.B[x - dist, y + dist] }).To<Hsv>().V * 100;
+
+                    var ssx1 = (new Rgb { R = image.R[x - smallDist, y], G = image.G[x - smallDist, y], B = image.B[x - smallDist, y] }).To<Hsv>().V * 100;
+                    var ssx2 = (new Rgb { R = image.R[x + smallDist, y], G = image.G[x + smallDist, y], B = image.B[x + smallDist, y] }).To<Hsv>().V * 100;
+
+                    var ssy1 = (new Rgb { R = image.R[x, y - smallDist], G = image.G[x, y - smallDist], B = image.B[x, y - smallDist] }).To<Hsv>().V * 100;
+                    var ssy2 = (new Rgb { R = image.R[x, y + smallDist], G = image.G[x, y + smallDist], B = image.B[x, y + smallDist] }).To<Hsv>().V * 100;
+
+                    var ssdiag1 = (new Rgb { R = image.R[x - smallDist, y - smallDist], G = image.G[x - smallDist, y - smallDist], B = image.B[x - smallDist, y - smallDist] }).To<Hsv>().V * 100;
+                    var ssdiag2 = (new Rgb { R = image.R[x + smallDist, y + smallDist], G = image.G[x + smallDist, y + smallDist], B = image.B[x + smallDist, y + smallDist] }).To<Hsv>().V * 100;
+
+                    var ssdiag3 = (new Rgb { R = image.R[x + smallDist, y - smallDist], G = image.G[x + smallDist, y - smallDist], B = image.B[x + smallDist, y - smallDist] }).To<Hsv>().V * 100;
+                    var ssdiag4 = (new Rgb { R = image.R[x - smallDist, y + smallDist], G = image.G[x - smallDist, y + smallDist], B = image.B[x - smallDist, y + smallDist] }).To<Hsv>().V * 100;
+
+                    var msx1 = (new Rgb { R = image.R[x - mediumDist, y], G = image.G[x - mediumDist, y], B = image.B[x - mediumDist, y] }).To<Hsv>().V * 100;
+                    var msx2 = (new Rgb { R = image.R[x + mediumDist, y], G = image.G[x + mediumDist, y], B = image.B[x + mediumDist, y] }).To<Hsv>().V * 100;
+
+                    var msy1 = (new Rgb { R = image.R[x, y - mediumDist], G = image.G[x, y - mediumDist], B = image.B[x, y - mediumDist] }).To<Hsv>().V * 100;
+                    var msy2 = (new Rgb { R = image.R[x, y + mediumDist], G = image.G[x, y + mediumDist], B = image.B[x, y + mediumDist] }).To<Hsv>().V * 100;
+
+                    var msdiag1 = (new Rgb { R = image.R[x - mediumDist, y - mediumDist], G = image.G[x - mediumDist, y - mediumDist], B = image.B[x - mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
+                    var msdiag2 = (new Rgb { R = image.R[x + mediumDist, y + mediumDist], G = image.G[x + mediumDist, y + mediumDist], B = image.B[x + mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
+
+                    var msdiag3 = (new Rgb { R = image.R[x + mediumDist, y - mediumDist], G = image.G[x + mediumDist, y - mediumDist], B = image.B[x + mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
+                    var msdiag4 = (new Rgb { R = image.R[x - mediumDist, y + mediumDist], G = image.G[x - mediumDist, y + mediumDist], B = image.B[x - mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
+                    var results = new List<double>();
+
+                    results.Add(Math.Abs(sx1 - sx2) * Math.Abs(ssx1 - ssx2) * Math.Abs(msx1 - msx2));
+                    results.Add(Math.Abs(sy1 - sy2) * Math.Abs(ssy1 - ssy2) * Math.Abs(msy1 - msy2));
+                    results.Add(Math.Abs(sdiag1 - sdiag2) * Math.Abs(ssdiag1 - ssdiag2) * Math.Abs(msdiag1 - msdiag2));
+                    results.Add(Math.Abs(sdiag3 - sdiag4) * Math.Abs(ssdiag3 - ssdiag4) * Math.Abs(msdiag3 - msdiag4));
+
+
+                    outputData.C[x, y] = SafeAdd(0, (int)results.Max() / 20);
+                }
+            }
+
+            return outputData;
+        }
+
 
         internal static GrayscaleStandardImage Laplacien(GrayscaleStandardImage image)
         {
@@ -481,6 +689,112 @@ namespace NVision.Internal.Service
                     image.G[x, y] = (image.G[x, y] / precision) * precision;
                     image.B[x, y] = (image.B[x, y] / precision) * precision;
                 }
+            }
+
+            return image;
+        }
+
+        internal static IList<Point> GetLinePixels(int x1, int y1, int x2, int y2)
+        {
+            var pixels = new List<Point>();
+
+            int cx, cy,
+                ix, iy,
+                dx, dy,
+                ddx = x2 - x1, ddy = y2 - y1;
+
+            if (ddx == 0)
+            { //vertical line special case
+                if (ddy > 0)
+                {
+                    cy = y1;
+                    do
+                    {
+                        pixels.Add(new Point(x1, cy));
+                        cy++;
+                    }
+                    while (cy <= y2);
+                    return pixels;
+                }
+
+                cy = y2;
+                do
+                {
+                    pixels.Add(new Point(x1, cy++));
+                    cy++;
+                } while (cy <= y1);
+                return pixels;
+            }
+
+            if (ddy == 0)
+            { //horizontal line special case
+                if (ddx > 0)
+                {
+                    cx = x1;
+                    do
+                    {
+                        pixels.Add(new Point(cx, y1));
+                        cx++;
+                    } while (cx <= x2);
+                    return pixels;
+                }
+                cx = x2;
+                do
+                {
+                    pixels.Add(new Point(cx, y1));
+                    cx++;
+                }
+                while (cx <= x1);
+                return pixels;
+            }
+
+            if (ddy < 0) { iy = -1; ddy = -ddy; }//pointing up
+            else iy = 1;
+            if (ddx < 0) { ix = -1; ddx = -ddx; }//pointing left
+            else ix = 1;
+            dx = dy = ddx * ddy;
+            cy = y1;
+            cx = x1;
+
+            if (ddx < ddy)
+            { // < 45 degrees, a tall line    
+                do
+                {
+                    dx -= ddy;
+                    do
+                    {
+                        pixels.Add(new Point(cx, cy));
+                        cy += iy;
+                        dy -= ddx;
+                    } while (dy >= dx);
+                    cx += ix;
+                } while (dx > 0);
+            }
+            else
+            { // >= 45 degrees, a wide line
+                do
+                {
+                    dy -= ddx;
+                    do
+                    {
+                        pixels.Add(new Point(cx, cy));
+                        cx += ix;
+                        dx -= ddy;
+                    } while (dx >= dy);
+                    cy += iy;
+                } while (dy > 0);
+            }
+
+            return pixels;
+        }
+
+        internal static StandardImage DrawPixels(this StandardImage image, IList<Point> pixels)
+        {
+            foreach (var pixel in pixels)
+            {
+                image.R[pixel.X, pixel.Y] = 255;
+                image.G[pixel.X, pixel.Y] = 0;
+                image.B[pixel.X, pixel.Y] = 0;
             }
 
             return image;

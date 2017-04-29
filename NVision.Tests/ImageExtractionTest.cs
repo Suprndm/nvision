@@ -34,7 +34,7 @@ namespace NVision.Tests
                 Resources.Resources.TestCase1,
                 Resources.Resources.TestCase2,
                 Resources.Resources.TestCase3,
-                Resources.Resources.TestCase4,
+              Resources.Resources.TestCase4,
                 Resources.Resources.TestCase5,
             };
         }
@@ -153,7 +153,10 @@ namespace NVision.Tests
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
-                grayImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                standardImage = grayImage.ConvertToStandardImage();
+                var pixels = ImageHelper.GetLinePixels(50, 50, 20, 450);
+                standardImage = standardImage.DrawPixels(pixels);
+                standardImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 //// Step Corner Detection
                 //step = Operation.ImageCornerDetection;

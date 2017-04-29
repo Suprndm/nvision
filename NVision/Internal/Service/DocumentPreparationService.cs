@@ -12,9 +12,15 @@ namespace NVision.Internal.Service
         public GrayscaleStandardImage IsolateDocument(StandardImage image, IDictionary<Point, int> svPikes )
         {
             //var documentColor = GetDocumentColor(image);
-            var grayImage = SvPikeHat(image, svPikes);
-          //  grayImage = ImageHelper.Hat(grayImage, 20);
-          // grayImage = UniformizeDocument(grayImage);
+          var brightessEdges = ImageHelper.BrightnessLaplacien(image);
+          var saturationEdges = ImageHelper.SaturationLaplacien(image);
+
+            var grayImage = ImageHelper.Average(brightessEdges, saturationEdges);
+
+           
+            //  grayImage = ImageHelper.Hat(grayImage, 10);
+            // grayImage = UniformizeDocument(grayImage);
+
             return grayImage;
         }
 
@@ -49,12 +55,16 @@ namespace NVision.Internal.Service
                     var myRgb = new Rgb {R = image.R[i,j], G = image.G[i, j], B = image.B[i, j] };
                     var hsl = myRgb.To<Hsv>();
 
-                    var saturation = hsl.S*100;
-                    var brightness = hsl.V*100;
-                    if (saturation < saturationCutoff && brightness  > brightnessCutoff)
+                    var saturation = hsl.S * 100;
+                    if (saturation >13 && saturation<40 )
                         grayImage.C[i, j] = 255;
-                    else
-                        grayImage.C[i, j] = 0;
+                    else grayImage.C[i, j] = 0;
+                    //var saturation = hsl.S*100;
+                    //var brightness = hsl.V*100;
+                    //if (saturation < saturationCutoff && brightness  > brightnessCutoff)
+                    //    grayImage.C[i, j] = 255;
+                    //else
+                    //    grayImage.C[i, j] = 0;
                 }
             }
 
@@ -63,17 +73,16 @@ namespace NVision.Internal.Service
 
         public GrayscaleStandardImage DocumentEligibilityMap(StandardImage image)
         {
+            var svMap = ImageHelper.GetSVMap(image);
+            var pike = ImageHelper.GetDocumentPike(svMap);
             var grayImage = image.ConvertToGrayScaleStandardImage();
             for (int i = 0; i < image.Width; i++)
             {
                 for (int j = 0; j < image.Height; j++)
                 {
-                    bool stop = false;
-                    if (i == 114 && j == 50)
-                        stop = true;
                     Color pixelColor = Color.FromArgb(1, image.R[i, j], image.G[i, j], image.B[i, j]);
 
-                    grayImage.C[i, j] = pixelColor.CouldBeDocumentColor() == true ? 255 : 0;
+                    grayImage.C[i, j] = pixelColor.IsInPike(pike) ? 255 : 0;
                 }
             }
 
