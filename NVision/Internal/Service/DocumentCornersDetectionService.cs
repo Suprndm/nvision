@@ -19,7 +19,7 @@ namespace NVision.Internal.Service
             var pointsDictionnary = new Dictionary<FormType, Point>();
             var corners = new Dictionary<FormType, Area>();
 
-      //      image = ImageHelper.Laplacien(image);
+            //      image = ImageHelper.Laplacien(image);
 
             corners.Add(FormType.TopLeft, new Area(0, 0, image.Width / 2, image.Height / 2));
             corners.Add(FormType.TopRight, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
@@ -31,7 +31,7 @@ namespace NVision.Internal.Service
             {
 
                 var results =
-                    FormSimilarityHelper.Instance.SearchForForm(allForms.Where(f=>f.Type== form).ToList(), image, corners[form]);
+                    FormSimilarityHelper.Instance.SearchForForm(allForms.Where(f => f.Type == form).ToList(), image, corners[form]);
                 // SORT TAKE HALF BEST
                 results = results.OrderByDescending(s => s.Similarity).ToList();
                 results = results.Take(results.Count / 2).ToList();
@@ -51,13 +51,34 @@ namespace NVision.Internal.Service
         }
 
 
-        private IDictionary<Point, double> EvalLinesAtPoint(GrayscaleStandardImage image, Point point)
+        //private IDictionary<Point, double> EvalLinesAtPoint(GrayscaleStandardImage image, Point point)
+        //{
+        //    int step = 5;
+        //    for (int i = 0; i < 360 / step; i++) //Supprimer cas i=0 et i=360/step
+        //    {
+        //    }
+        //}
+
+        public Line GetLineFromAngleAndPoint(GrayscaleStandardImage image, Point point, double angle)
         {
-            int step = 5;
-            for (int i = 0; i < 360/ step; i++)
-            {
-                
-            }
+            double theta = angle * 2 * Math.PI / 360;
+            double alpha = Math.Cos(theta);
+            double beta = Math.Sin(theta);
+
+            double bottomIntersect = point.X + (0 - point.Y) * alpha / beta;
+            double topIntersect = point.X + (image.Height - point.Y) * alpha / beta;
+            double leftIntersect = point.Y + (0 - point.X) * beta / alpha;
+            double rightIntersect = point.Y + (image.Width - point.X) * beta / alpha;
+
+            List<Point> intersectionPoints = new List<Point>();
+            intersectionPoints.Add(new Point((int)Math.Round(bottomIntersect), 0));
+            intersectionPoints.Add(new Point((int)Math.Round(topIntersect), image.Height));
+            intersectionPoints.Add(new Point(0, (int)Math.Round(leftIntersect)));
+            intersectionPoints.Add(new Point(image.Width, (int)Math.Round(rightIntersect)));
+
+            var innerIntersectionPoints = intersectionPoints.Where(p => p.X >= 0 && p.X < image.Width && p.Y >= 0 && p.Y < image.Height).ToList();
+
+            return new Line(innerIntersectionPoints[0], innerIntersectionPoints[1]);
         }
 
         private IList<Point> GroupSimilarityResults(IList<SimilarityResult> results)
@@ -87,7 +108,7 @@ namespace NVision.Internal.Service
                         points[strongestForcePike.Key] += 1;
                     }
                     else
-                        points.Add( new Point(result.Position.X, result.Position.Y), 1);
+                        points.Add(new Point(result.Position.X, result.Position.Y), 1);
                 }
             }
 
