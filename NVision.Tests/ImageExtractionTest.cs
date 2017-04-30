@@ -32,10 +32,10 @@ namespace NVision.Tests
             _testCases = new List<Bitmap>
             {
                 Resources.Resources.TestCase1,
-                Resources.Resources.TestCase2,
-                Resources.Resources.TestCase3,
-              Resources.Resources.TestCase4,
-                Resources.Resources.TestCase5,
+               Resources.Resources.TestCase2,
+               Resources.Resources.TestCase3,
+               Resources.Resources.TestCase4,
+               Resources.Resources.TestCase5,
             };
         }
 
@@ -158,14 +158,14 @@ namespace NVision.Tests
                 standardImage = standardImage.DrawPixels(pixels);
                 standardImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
-                //// Step Corner Detection
-                //step = Operation.ImageCornerDetection;
-                //_stopwatch.Start();
-                //var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
-                //_stopwatch.Stop();
-                //report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
-                //_stopwatch.Reset();
-                //_documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                // Step Corner Detection
+                step = Operation.ImageCornerDetection;
+                _stopwatch.Start();
+                var corners = _documentCornersDetectionService.GetCorners(grayImage);
+                _stopwatch.Stop();
+                report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
+                _stopwatch.Reset();
+                _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 //var originalRatio = targetStandardImage.Height / grayImage.Height;
                 //IList<Point> originalCornersCoordinates = new List<Point>();

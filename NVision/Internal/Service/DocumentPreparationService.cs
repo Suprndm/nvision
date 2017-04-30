@@ -16,8 +16,20 @@ namespace NVision.Internal.Service
           var saturationEdges = ImageHelper.SaturationLaplacien(image);
 
             var grayImage = ImageHelper.Average(brightessEdges, saturationEdges);
+            grayImage = ImageHelper.Hat(grayImage, 80);
+          
 
-           
+            grayImage = ImageHelper.Erosion(grayImage, 0);
+            grayImage = ImageHelper.Dilatation(grayImage, 0);
+            grayImage = ImageHelper.Erosion(grayImage, 0);
+            grayImage = ImageHelper.Dilatation(grayImage, 0);
+            grayImage = ImageHelper.Erosion(grayImage, 0);
+            grayImage = ImageHelper.Dilatation(grayImage, 0);
+            grayImage = ImageHelper.Erosion(grayImage, 0);
+
+            //grayImage = ImageHelper.Laplacien(grayImage);
+            //grayImage = ImageHelper.Hat(grayImage, 10);
+
             //  grayImage = ImageHelper.Hat(grayImage, 10);
             // grayImage = UniformizeDocument(grayImage);
 

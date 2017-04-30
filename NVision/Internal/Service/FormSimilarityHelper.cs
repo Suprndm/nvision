@@ -33,36 +33,34 @@ namespace NVision.Internal.Service
                 return _instance;
             }
         }
-        public SimilarityResult SearchForCorner(Form form, StandardImage image, GrayscaleStandardImage edges, Area area)
+
+        public IList<SimilarityResult> SearchForForm(IList<Form> forms , GrayscaleStandardImage image, Area area)
         {
             var scores = new List<SimilarityResult>();
             for (int i = area.From.X; i < area.To.X; i++)
             {
                 for (int j = area.From.Y; j < area.To.Y; j++)
                 {
-                    var position = new Point(i, j);
-                    if (edges.C[i,j]==255)
-                        scores.Add(new SimilarityResult(position, EvalFormSimilarity(form, image, position)));
-                }
-            }
+                    if (i == 336 && j == 59)
+                    {
+                        int test = 0;
+                    }
+                    if (i == 344 && j == 122)
+                    {
+                        int test = 0;
+                    }
 
-            var orderedScores = scores.OrderByDescending(x => x.Similarity);
-
-            var bestResult = orderedScores.First();
-
-            return bestResult;
-        }
-
-        public SimilarityResult SearchForForm(Form form, GrayscaleStandardImage image, Area area)
-        {
-            var scores = new List<SimilarityResult>();
-            for (int i = area.From.X; i < area.To.X; i++)
-            {
-                for (int j = area.From.Y; j < area.To.Y; j++)
-                {
                     var position = new Point(i, j);
                     if (image.C[i, j] == 255)
-                        scores.Add(new SimilarityResult(position, EvalFormSimilarity(form, image, position)));
+                    {
+                        var results = new List<SimilarityResult>();
+                        foreach (var form in forms)
+                        {
+                            results.Add(new SimilarityResult(position, EvalFormSimilarity(form, image, position)));
+                        }
+
+                        scores.Add(results.Aggregate((l, r) => l.Similarity > r.Similarity ? l : r));
+                    }
                 }
             }
 
@@ -70,56 +68,7 @@ namespace NVision.Internal.Service
 
             var bestResult = orderedScores.First();
 
-            return bestResult;
-        }
-
-        public double EvalFormSimilarity(Form form, StandardImage image, Point position)
-        {
-            Color positionPixelColor = Color.FromArgb(1,
-                image.R[position.X, position.Y],
-                image.G[position.X, position.Y],
-                image.B[position.X, position.Y]);
-
-            double score = 0;
-            int beginX = Math.Max(0, position.X - form.Width / 2);
-            int endX = Math.Min(image.Width, position.X + form.Width / 2);
-
-            int beginY = Math.Max(0, position.Y - form.Height / 2);
-            int endY = Math.Min(image.Height, position.Y + form.Height / 2);
-
-            var test = 0;
-            if (position.X == 161 && position.Y == 58)
-                test = 1;
-
-            //double topLeftAverageDistance = 0;
-            //double topRightAverageDistance = 0;
-            //double topAverageDistance = 0;
-            //double topLeftAverageDistance = 0;
-            var pixelAnalysed = 0;
-            for (int i = beginX; i < endX; i++)
-            {
-                for (int j = beginY; j < endY; j++)
-                {
-                    pixelAnalysed++;
-                    var xMask = i - position.X + form.Width / 2;
-                    var yMask = j - position.Y + form.Height / 2;
-                    var evaluatedPixelColor = Color.FromArgb(1,
-                         image.R[i, j],
-                         image.G[i, j],
-                         image.B[i, j]);
-
-                    var distance = ImageHelper.GetDistanceBetweenColors(positionPixelColor, evaluatedPixelColor);
-                    if ((form.Mask[xMask, yMask] && distance < 75) || (!form.Mask[xMask, yMask] && distance > 75))
-                        score++;
-
-                }
-            }
-
-
-
-            score = score/pixelAnalysed;
-
-            return score;
+            return scores;
         }
 
         public double EvalFormSimilarity(Form form, GrayscaleStandardImage image, Point position)
@@ -127,10 +76,9 @@ namespace NVision.Internal.Service
             double score = 0;
             int whiteCount = 0;
 
-            foreach (var white in form.Whites)
-            {
+            foreach(var white in form.Whites) { 
 
-                var whiteX = position.X + (white.X - form.Center.X);
+                var whiteX = position.X +(white.X - form.Center.X);
                 var whiteY = position.Y + (white.Y - form.Center.Y);
 
                 if (whiteX >= 0 && whiteX < image.Width && whiteY >= 0 && whiteY < image.Height)
@@ -146,7 +94,7 @@ namespace NVision.Internal.Service
                     {
                         for (int j = beginY; j < endY; j++)
                         {
-                            pixelScores.Add((image.C[i, j] * _detectionMask[i - whiteX + Md, j - whiteY + Md] / 255));
+                            pixelScores.Add((image.C[i,j]* _detectionMask[i- whiteX + Md, j- whiteY + Md] /255));
                         }
                     }
 
@@ -201,7 +149,7 @@ namespace NVision.Internal.Service
             {
                 for (int j = 0; j < Size; j++)
                 {
-                    str += " " + _detectionMask[i, j].ToString("N1") + " ";
+                    str += " " + _detectionMask[i, j].ToString("N1")+ " ";
                 }
                 str += "\n";
             }

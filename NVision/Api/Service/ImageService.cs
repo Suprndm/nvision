@@ -40,7 +40,7 @@ namespace NVision.Api.Service
             var standardImage = bitmap.ConvertToStandardImage();
             var grayImage = _documentPreparationService.DocumentEligibilityMap(standardImage);
 
-            var corners = _documentCornersDetectionService.GetCorners(standardImage, grayImage);
+            var corners = _documentCornersDetectionService.GetCorners(grayImage);
 
             var coloredStandardImage = grayImage.ConvertToStandardImage();
 

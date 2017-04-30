@@ -13,6 +13,11 @@ namespace NVision.Api.Model
         public double A { get; set; }
         public double B { get; set; }
 
+        public double Theta { get; set; }
+        public double R { get; set; }
+
+
+
         public Line(Point p1, Point p2)
         {
             A = (double)(p1.Y - p2.Y)/(p2.X - p1.X);
