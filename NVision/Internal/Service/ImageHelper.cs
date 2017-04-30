@@ -384,7 +384,7 @@ namespace NVision.Internal.Service
                 C = new int[image.Width, image.Height],
             };
 
-            var dist = 8;
+            var dist = 4;
             var mediumDist = 2;
             var smallDist = 1;
             for (int x = dist; x < image.Width - dist; x++)
@@ -475,46 +475,106 @@ namespace NVision.Internal.Service
             var dist = 8;
             var mediumDist = 2;
             var smallDist = 1;
-            for (int x = dist; x < image.Width - dist; x++)
+            for (int x = 0; x < image.Width ; x++)
             {
-                for (int y = dist; y < image.Height - dist; y++)
+                for (int y = 0; y < image.Height ; y++)
                 {
+                    double sx1 = 0;
+                    double sx2 = 0;
+                    if (x - dist > 0 && x + dist < image.Width)
+                    {
+                        sx1 = (new Rgb { R = image.R[x - dist, y], G = image.G[x - dist, y], B = image.B[x - dist, y] }).To<Hsv>().V * 100;
+                        sx2 = (new Rgb { R = image.R[x + dist, y], G = image.G[x + dist, y], B = image.B[x + dist, y] }).To<Hsv>().V * 100;
+                    }
 
-                    var sx1 = (new Rgb { R = image.R[x - dist, y], G = image.G[x - dist, y], B = image.B[x - dist, y] }).To<Hsv>().V * 100;
-                    var sx2 = (new Rgb { R = image.R[x + dist, y], G = image.G[x + dist, y], B = image.B[x + dist, y] }).To<Hsv>().V * 100;
+                    double sy1 = 0;
+                    double sy2 = 0;
+                    if (y - dist > 0 && y + dist < image.Height)
+                    {
+                        sy1 = (new Rgb { R = image.R[x, y - dist], G = image.G[x, y - dist], B = image.B[x, y - dist] }).To<Hsv>().V * 100;
+                        sy2 = (new Rgb { R = image.R[x, y + dist], G = image.G[x, y + dist], B = image.B[x, y + dist] }).To<Hsv>().V * 100;
+                    }
 
-                    var sy1 = (new Rgb { R = image.R[x, y - dist], G = image.G[x, y - dist], B = image.B[x, y - dist] }).To<Hsv>().V * 100;
-                    var sy2 = (new Rgb { R = image.R[x, y + dist], G = image.G[x, y + dist], B = image.B[x, y + dist] }).To<Hsv>().V * 100;
+                    double sdiag1 = 0;
+                    double sdiag2 = 0;
+                    if (y - dist > 0 && y + dist < image.Height && x - dist > 0 && x + dist < image.Width)
+                    {
+                        sdiag1 = (new Rgb { R = image.R[x - dist, y - dist], G = image.G[x - dist, y - dist], B = image.B[x - dist, y - dist] }).To<Hsv>().V * 100;
+                        sdiag2 = (new Rgb { R = image.R[x + dist, y + dist], G = image.G[x + dist, y + dist], B = image.B[x + dist, y + dist] }).To<Hsv>().V * 100;
+                    }
 
-                    var sdiag1 = (new Rgb { R = image.R[x - dist, y - dist], G = image.G[x - dist, y - dist], B = image.B[x - dist, y - dist] }).To<Hsv>().V * 100;
-                    var sdiag2 = (new Rgb { R = image.R[x + dist, y + dist], G = image.G[x + dist, y + dist], B = image.B[x + dist, y + dist] }).To<Hsv>().V * 100;
+                    double sdiag3 = 0;
+                    double sdiag4 = 0;
+                    if (y - dist > 0 && y + dist < image.Height && x - dist > 0 && x + dist < image.Width)
+                    {
+                        sdiag3 = (new Rgb { R = image.R[x + dist, y - dist], G = image.G[x + dist, y - dist], B = image.B[x + dist, y - dist] }).To<Hsv>().V * 100;
+                        sdiag4 = (new Rgb { R = image.R[x - dist, y + dist], G = image.G[x - dist, y + dist], B = image.B[x - dist, y + dist] }).To<Hsv>().V * 100;
+                    }
 
-                    var sdiag3 = (new Rgb { R = image.R[x + dist, y - dist], G = image.G[x + dist, y - dist], B = image.B[x + dist, y - dist] }).To<Hsv>().V * 100;
-                    var sdiag4 = (new Rgb { R = image.R[x - dist, y + dist], G = image.G[x - dist, y + dist], B = image.B[x - dist, y + dist] }).To<Hsv>().V * 100;
+                    double ssx1 = 0;
+                    double ssx2 = 0;
+                    if (x - smallDist > 0 && x + smallDist < image.Width)
+                    {
+                        ssx1 = (new Rgb { R = image.R[x - smallDist, y], G = image.G[x - smallDist, y], B = image.B[x - smallDist, y] }).To<Hsv>().V * 100;
+                        ssx2 = (new Rgb { R = image.R[x + smallDist, y], G = image.G[x + smallDist, y], B = image.B[x + smallDist, y] }).To<Hsv>().V * 100;
+                    }
 
-                    var ssx1 = (new Rgb { R = image.R[x - smallDist, y], G = image.G[x - smallDist, y], B = image.B[x - smallDist, y] }).To<Hsv>().V * 100;
-                    var ssx2 = (new Rgb { R = image.R[x + smallDist, y], G = image.G[x + smallDist, y], B = image.B[x + smallDist, y] }).To<Hsv>().V * 100;
+                    double ssy1 = 0;
+                    double ssy2 = 0;
+                    if (y - smallDist > 0 && y + smallDist < image.Height)
+                    {
+                        ssy1 = (new Rgb { R = image.R[x, y - smallDist], G = image.G[x, y - smallDist], B = image.B[x, y - smallDist] }).To<Hsv>().V * 100;
+                        ssy2 = (new Rgb { R = image.R[x, y + smallDist], G = image.G[x, y + smallDist], B = image.B[x, y + smallDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var ssy1 = (new Rgb { R = image.R[x, y - smallDist], G = image.G[x, y - smallDist], B = image.B[x, y - smallDist] }).To<Hsv>().V * 100;
-                    var ssy2 = (new Rgb { R = image.R[x, y + smallDist], G = image.G[x, y + smallDist], B = image.B[x, y + smallDist] }).To<Hsv>().V * 100;
+                    double ssdiag1 = 0;
+                    double ssdiag2 = 0;
+                    if (y - smallDist > 0 && y + smallDist < image.Height && x - smallDist > 0 && x + smallDist < image.Width)
+                    {
+                        ssdiag1 = (new Rgb { R = image.R[x - smallDist, y - smallDist], G = image.G[x - smallDist, y - smallDist], B = image.B[x - smallDist, y - smallDist] }).To<Hsv>().V * 100;
+                        ssdiag2 = (new Rgb { R = image.R[x + smallDist, y + smallDist], G = image.G[x + smallDist, y + smallDist], B = image.B[x + smallDist, y + smallDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var ssdiag1 = (new Rgb { R = image.R[x - smallDist, y - smallDist], G = image.G[x - smallDist, y - smallDist], B = image.B[x - smallDist, y - smallDist] }).To<Hsv>().V * 100;
-                    var ssdiag2 = (new Rgb { R = image.R[x + smallDist, y + smallDist], G = image.G[x + smallDist, y + smallDist], B = image.B[x + smallDist, y + smallDist] }).To<Hsv>().V * 100;
+                    double ssdiag3 = 0;
+                    double ssdiag4 = 0;
+                    if (y - smallDist > 0 && y + smallDist < image.Height && x - smallDist > 0 && x + smallDist < image.Width)
+                    {
+                        ssdiag3 = (new Rgb { R = image.R[x + smallDist, y - smallDist], G = image.G[x + smallDist, y - smallDist], B = image.B[x + smallDist, y - smallDist] }).To<Hsv>().V * 100;
+                        ssdiag4 = (new Rgb { R = image.R[x - smallDist, y + smallDist], G = image.G[x - smallDist, y + smallDist], B = image.B[x - smallDist, y + smallDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var ssdiag3 = (new Rgb { R = image.R[x + smallDist, y - smallDist], G = image.G[x + smallDist, y - smallDist], B = image.B[x + smallDist, y - smallDist] }).To<Hsv>().V * 100;
-                    var ssdiag4 = (new Rgb { R = image.R[x - smallDist, y + smallDist], G = image.G[x - smallDist, y + smallDist], B = image.B[x - smallDist, y + smallDist] }).To<Hsv>().V * 100;
+                    double msx1 = 0;
+                    double msx2 = 0;
+                    if (x - mediumDist > 0 && x + mediumDist < image.Width)
+                    {
+                        msx1 = (new Rgb { R = image.R[x - mediumDist, y], G = image.G[x - mediumDist, y], B = image.B[x - mediumDist, y] }).To<Hsv>().V * 100;
+                        msx2 = (new Rgb { R = image.R[x + mediumDist, y], G = image.G[x + mediumDist, y], B = image.B[x + mediumDist, y] }).To<Hsv>().V * 100;
+                    }
 
-                    var msx1 = (new Rgb { R = image.R[x - mediumDist, y], G = image.G[x - mediumDist, y], B = image.B[x - mediumDist, y] }).To<Hsv>().V * 100;
-                    var msx2 = (new Rgb { R = image.R[x + mediumDist, y], G = image.G[x + mediumDist, y], B = image.B[x + mediumDist, y] }).To<Hsv>().V * 100;
+                    double msy1 = 0;
+                    double msy2 = 0;
+                    if (y - mediumDist > 0 && y + mediumDist < image.Height)
+                    {
+                        msy1 = (new Rgb { R = image.R[x, y - mediumDist], G = image.G[x, y - mediumDist], B = image.B[x, y - mediumDist] }).To<Hsv>().V * 100;
+                        msy2 = (new Rgb { R = image.R[x, y + mediumDist], G = image.G[x, y + mediumDist], B = image.B[x, y + mediumDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var msy1 = (new Rgb { R = image.R[x, y - mediumDist], G = image.G[x, y - mediumDist], B = image.B[x, y - mediumDist] }).To<Hsv>().V * 100;
-                    var msy2 = (new Rgb { R = image.R[x, y + mediumDist], G = image.G[x, y + mediumDist], B = image.B[x, y + mediumDist] }).To<Hsv>().V * 100;
+                    double msdiag1 = 0;
+                    double msdiag2 = 0;
+                    if (y - mediumDist > 0 && y + mediumDist < image.Height && x - mediumDist > 0 && x + mediumDist < image.Width)
+                    {
+                        msdiag1 = (new Rgb { R = image.R[x - mediumDist, y - mediumDist], G = image.G[x - mediumDist, y - mediumDist], B = image.B[x - mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
+                        msdiag2 = (new Rgb { R = image.R[x + mediumDist, y + mediumDist], G = image.G[x + mediumDist, y + mediumDist], B = image.B[x + mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var msdiag1 = (new Rgb { R = image.R[x - mediumDist, y - mediumDist], G = image.G[x - mediumDist, y - mediumDist], B = image.B[x - mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
-                    var msdiag2 = (new Rgb { R = image.R[x + mediumDist, y + mediumDist], G = image.G[x + mediumDist, y + mediumDist], B = image.B[x + mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
+                    double msdiag3 = 0;
+                    double msdiag4 = 0;
+                    if (y - mediumDist > 0 && y + mediumDist < image.Height && x - mediumDist > 0 && x + mediumDist < image.Width)
+                    {
+                        msdiag3 = (new Rgb { R = image.R[x + mediumDist, y - mediumDist], G = image.G[x + mediumDist, y - mediumDist], B = image.B[x + mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
+                        msdiag4 = (new Rgb { R = image.R[x - mediumDist, y + mediumDist], G = image.G[x - mediumDist, y + mediumDist], B = image.B[x - mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
+                    }
 
-                    var msdiag3 = (new Rgb { R = image.R[x + mediumDist, y - mediumDist], G = image.G[x + mediumDist, y - mediumDist], B = image.B[x + mediumDist, y - mediumDist] }).To<Hsv>().V * 100;
-                    var msdiag4 = (new Rgb { R = image.R[x - mediumDist, y + mediumDist], G = image.G[x - mediumDist, y + mediumDist], B = image.B[x - mediumDist, y + mediumDist] }).To<Hsv>().V * 100;
                     var results = new List<double>();
 
                     results.Add(Math.Abs(sx1 - sx2) * Math.Abs(ssx1 - ssx2) * Math.Abs(msx1 - msx2));
