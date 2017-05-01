@@ -37,18 +37,18 @@ namespace NVision.Api.Service
 
         public Bitmap PrepareImageToOcr(Bitmap bitmap)
         {
-            bitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
-            var standardImage = bitmap.ConvertToStandardImage();
-            var grayImage = _documentPreparationService.DocumentEligibilityMap(standardImage);
+            //bitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
+            //var standardImage = bitmap.ConvertToStandardImage();
+            //var grayImage = _documentPreparationService.DocumentEligibilityMap(standardImage);
 
-            var corners = _documentCornersDetectionService.GetCorners(grayImage);
+            //var corners = _documentCornersDetectionService.GetCorners(grayImage);
 
-            var coloredStandardImage = grayImage.ConvertToStandardImage();
+            //var coloredStandardImage = grayImage.ConvertToStandardImage();
 
-            //foreach (var point in corners)
-            //{
-            //    coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
-            //}
+            ////foreach (var point in corners)
+            ////{
+            ////    coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
+            ////}
 
             StandardImage rotatedImage = null;// _documentStraightenerService.StraightenDocument(standardImage, corners);
 

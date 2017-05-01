@@ -475,9 +475,9 @@ namespace NVision.Internal.Service
             var dist = 8;
             var mediumDist = 2;
             var smallDist = 1;
-            for (int x = 0; x < image.Width ; x++)
+            for (int x = 0; x < image.Width; x++)
             {
-                for (int y = 0; y < image.Height ; y++)
+                for (int y = 0; y < image.Height; y++)
                 {
                     double sx1 = 0;
                     double sx2 = 0;
@@ -848,19 +848,19 @@ namespace NVision.Internal.Service
             return pixels;
         }
 
-        internal static StandardImage DrawPixels(this StandardImage image, IList<Point> pixels)
+        internal static StandardImage DrawPixels(this StandardImage image, IList<Point> pixels, Color color)
         {
             foreach (var pixel in pixels)
             {
-                image.R[pixel.X, pixel.Y] = 255;
-                image.G[pixel.X, pixel.Y] = 0;
-                image.B[pixel.X, pixel.Y] = 0;
+                image.R[pixel.X, pixel.Y] = color.R;
+                image.G[pixel.X, pixel.Y] = color.G;
+                image.B[pixel.X, pixel.Y] = color.B;
             }
 
             return image;
         }
 
-        internal static StandardImage DrawIndicator(this StandardImage image, int x, int y, int size)
+        internal static StandardImage DrawIndicator(this StandardImage image, int x, int y, int size, Color color)
         {
             for (int i = -size; i < size; i++)
             {
@@ -870,9 +870,9 @@ namespace NVision.Internal.Service
                     var posY = y + j;
                     if (posX > 0 && posX < image.Width && posY > 0 && posY < image.Height)
                     {
-                        image.R[posX, posY] = 255;
-                        image.G[posX, posY] = 0;
-                        image.B[posX, posY] = 0;
+                        image.R[posX, posY] = color.R;
+                        image.G[posX, posY] = color.G;
+                        image.B[posX, posY] = color.B;
                     }
                 }
             }

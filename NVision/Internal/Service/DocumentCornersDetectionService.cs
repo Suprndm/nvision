@@ -13,50 +13,60 @@ namespace NVision.Internal.Service
 {
     internal class DocumentCornersDetectionService
     {
-        internal IList<Line> GetCorners(GrayscaleStandardImage image)
+
+        internal IList<Point> GetPointsOfInterest(GrayscaleStandardImage image, FormType formType, Area area)
         {
-            var points = new ConcurrentBag<Point>();
-            var pointsDictionnary = new Dictionary<FormType, Point>();
-            var corners = new Dictionary<FormType, Area>();
-
-            //      image = ImageHelper.Laplacien(image);
-
-            corners.Add(FormType.TopLeft, new Area(0, 0, image.Width / 2, image.Height / 2));
-             corners.Add(FormType.TopRight, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
-             corners.Add(FormType.BottomLeft, new Area(0, image.Height / 2, image.Width / 2, image.Height));
-             corners.Add(FormType.BottomRight, new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
-
             var allForms = CornersBuilder.GetCornerForms();
-            ConcurrentDictionary<Line, double> linesResults = new ConcurrentDictionary<Line, double>();
-            Parallel.ForEach(corners.Keys, (form) =>
-            {
 
-                var results =
-                    FormSimilarityHelper.Instance.SearchForForm(allForms.Where(f => f.Type == form).ToList(), image, corners[form]);
-                // SORT TAKE HALF BEST
-                results = results.OrderByDescending(s => s.Similarity).ToList();
-                results = results.Take(results.Count / 2).ToList();
-                var groupedResults = GroupSimilarityResults(results);
-                foreach (var result in groupedResults)
+            var results =
+                 FormSimilarityHelper.Instance.SearchForForm(allForms.Where(f => f.Type == formType).ToList(), image,
+                     area);
+
+            // SORT TAKE HALF BEST
+            results = results.OrderByDescending(s => s.Similarity).ToList();
+            results = results.Take(results.Count / 2).ToList();
+            return GroupSimilarityResults(results);
+        }
+
+        internal IList<Line> GetLines(IList<Point> interests, GrayscaleStandardImage image)
+        {
+            Dictionary<Line, double> linesResults = new Dictionary<Line, double>();
+            foreach (var result in interests)
+            {
+                var lines = EvalLinesAtPoint(image, result);
+                foreach (var line in lines)
                 {
-                    var lines = EvalLinesAtPoint(image, result);
-                    foreach (var line in lines)
+                    linesResults.Add(line.Key, line.Value);
+                }
+            }
+
+            // GROUP LINES HERE
+            var groupedLines = GroupLines(linesResults.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+
+            return groupedLines;
+        }
+
+        internal IList<Point> GetCorners(IList<Line> lines, GrayscaleStandardImage image)
+        {
+            ConcurrentBag<Point> bestCorners = new ConcurrentBag<Point>();
+            var potentialCorners = new List<Point>();
+                // GET BEST PAIR OF LINE
+                for (int i = 0; i < lines.Count - 1; i++)
+                {
+                    for (int j = i + 1; j < lines.Count; j++)
                     {
-                        linesResults.TryAdd(line.Key, line.Value);
+                        var intersection = new LineIntersection(lines[i], lines[j]);
+
+                        if (intersection.IntersectionPoint.X > 0 && intersection.IntersectionPoint.X < image.Width
+                            && intersection.IntersectionPoint.Y > 0 &&
+                            intersection.IntersectionPoint.Y < image.Height)
+                        {
+                            bestCorners.Add(intersection.IntersectionPoint);
+                        }
                     }
                 }
 
-
-            });
-
-            var groupedLines = GroupLines(linesResults.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-
-            //points.Add(pointsDictionnary[FormType.TopLeft]);
-            //points.Add(pointsDictionnary[FormType.TopRight]);
-            //points.Add(pointsDictionnary[FormType.BottomRight]);
-            //points.Add(pointsDictionnary[FormType.BottomLeft]);
-
-            return groupedLines;
+            return bestCorners.ToList();
         }
 
 
@@ -76,6 +86,7 @@ namespace NVision.Internal.Service
                 }
 
                 score = score / linePixels.Count;
+                line.WhiteRatio = score;
                 results.Add(line, score);
             }
 
@@ -175,16 +186,6 @@ namespace NVision.Internal.Service
             }
 
             return points.Keys.ToList();
-        }
-
-        public StandardImage GetCornersImageResult(StandardImage standard, IList<Point> corners)
-        {
-            foreach (var point in corners)
-            {
-                standard = standard.DrawIndicator(point.X, point.Y, 2);
-            }
-
-            return standard;
         }
     }
 }

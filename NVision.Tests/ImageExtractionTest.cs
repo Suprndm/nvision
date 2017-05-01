@@ -5,9 +5,11 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using NVision.Report;
 using Newtonsoft.Json;
+using NVision.Api.Model;
 using NVision.Internal.Service;
 using NVision.Internal.Formatting;
 using NVision.Internal.Model;
@@ -44,8 +46,8 @@ namespace NVision.Tests
         [Test]
         public void ShouldGetLine()
         {
-            var grayImage = new GrayscaleStandardImage() {Height = 500, Width = 350};
-            var point = new Point(175,250);
+            var grayImage = new GrayscaleStandardImage() { Height = 500, Width = 350 };
+            var point = new Point(175, 250);
             var line = _documentCornersDetectionService.GetLineFromAngleAndPoint(grayImage, point, 45);
         }
 
@@ -60,7 +62,7 @@ namespace NVision.Tests
             {
                 _stopwatch.Start();
                 var bitmap = _testCases[i];
-                var reducedBitmap = bitmap.ReduceSize((double) 500/Math.Max(bitmap.Width, bitmap.Height));
+                var reducedBitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
                 var standardImage = reducedBitmap.ConvertToStandardImage();
                 var saturationMap = ImageHelper.GetSaturationMap(standardImage);
                 var brightnessMap = ImageHelper.GetBrightnessMap(standardImage);
@@ -71,7 +73,7 @@ namespace NVision.Tests
                 var svPikes = ImageHelper.GetSvPikes(svMap);
 
                 var hueMap = ImageHelper.GetHueMAp(standardImage);
-                pikes += $"Case {i+1}: \n\r svPikes:{svPikes.Count} \n\r ";
+                pikes += $"Case {i + 1}: \n\r svPikes:{svPikes.Count} \n\r ";
                 //  string saturationReport = "Level;SaturationFrequence;SaturationPikes;BrightnessFrequence;BrightnessPikes\n";
                 //for (int j = 0; j <= 99; j++)
                 //{
@@ -102,7 +104,7 @@ namespace NVision.Tests
                     {
                         var point = new Point(j, k);
                         var svFrequency = 0;
-                        if(svMap.ContainsKey(point))
+                        if (svMap.ContainsKey(point))
                             svFrequency = svMap[point];
 
                         svReport += $"{j};{k};{svFrequency}\n";
@@ -111,7 +113,7 @@ namespace NVision.Tests
 
                 File.WriteAllText(path + $"SpectralAnalysis{i + 1}.csv", svReport);
             }
-                  File.WriteAllText(path + $"pikes.txt", pikes);
+            File.WriteAllText(path + $"pikes.txt", pikes);
         }
 
 
@@ -148,7 +150,7 @@ namespace NVision.Tests
                 var reducedBitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
                 var targetBitmap = bitmap.ReduceSize((double)1000 / Math.Max(bitmap.Width, bitmap.Height));
                 var targetStandardImage = targetBitmap.ConvertToStandardImage();
-                var standardImage = reducedBitmap.ConvertToStandardImage();
+                var image = reducedBitmap.ConvertToStandardImage();
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
@@ -156,28 +158,61 @@ namespace NVision.Tests
                 // Step preparation
                 step = Operation.ImagePreparation;
                 _stopwatch.Start();
-                var svMap = ImageHelper.GetSVMap(standardImage);
+                var svMap = ImageHelper.GetSVMap(image);
                 var svPikes = ImageHelper.GetSvPikes(svMap);
-                var grayImage = _documentPreparationService.IsolateDocument(standardImage, svPikes);
+                var grayImage = _documentPreparationService.IsolateDocument(image, svPikes);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
-                standardImage = grayImage.ConvertToStandardImage();
+                image = grayImage.ConvertToStandardImage();
 
                 // Step Corner Detection
                 step = Operation.ImageCornerDetection;
                 _stopwatch.Start();
-                var corners = _documentCornersDetectionService.GetCorners(grayImage);
-                foreach (var corner in corners)
+                var masks = new Dictionary<FormType, Area>();
+
+                //masks.Add(FormType.TopLeft, new Area(0, 0, image.Width / 2, image.Height / 2));
+                //masks.Add(FormType.TopRight, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
+                masks.Add(FormType.BottomLeft, new Area(0, image.Height / 2, image.Width / 2, image.Height));
+                //masks.Add(FormType.BottomRight, new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
+                var allForms = CornersBuilder.GetCornerForms();
+                var copiedImage = grayImage.ConvertToStandardImage();
+
+                Parallel.ForEach(masks.Keys, (form) =>
                 {
-                    standardImage = ImageHelper.DrawPixels(standardImage ,ImageHelper.GetLinePixels(corner.P1.X, corner.P1.Y, corner.P2.X, corner.P2.Y));
-                }
+                    var interests = _documentCornersDetectionService.GetPointsOfInterest(grayImage, form, masks[form]);
+                    var interestColor = Color.FromArgb(0, 255, 0);
+                    var lineColor = Color.FromArgb(255, 0, 0);
+                    var cornerColor = Color.FromArgb(255, 0, 255);
+
+                    foreach (var interest in interests)
+                    {
+                        copiedImage = ImageHelper.DrawIndicator(copiedImage, interest.X, interest.Y, 5, interestColor);
+                    }
+                    var lines = _documentCornersDetectionService.GetLines(interests, grayImage);
+
+                    foreach (var line in lines)
+                    {
+                        var pixels = ImageHelper.GetLinePixels(line.P1.X, line.P1.Y, line.P2.X, line.P2.Y);
+                        copiedImage = copiedImage.DrawPixels(pixels, lineColor);
+                    }
+
+                    var corners = _documentCornersDetectionService.GetCorners(lines, grayImage);
+                    foreach (var corner in corners)
+                    {
+                        copiedImage = ImageHelper.DrawIndicator(copiedImage, corner.X, corner.Y, 5, cornerColor);
+                    }
+
+                });
+                //foreach (var corner in corners)
+                //{
+                //    standardImage = ImageHelper.DrawPixels(standardImage ,ImageHelper.GetLinePixels(corner.P1.X, corner.P1.Y, corner.P2.X, corner.P2.Y));
+                //}
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
-                standardImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
-
-                //   _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                image.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                copiedImage.ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 //var originalRatio = targetStandardImage.Height / grayImage.Height;
                 //IList<Point> originalCornersCoordinates = new List<Point>();

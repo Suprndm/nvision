@@ -19,6 +19,7 @@ namespace NVision.Api.Model
         public Point P1 { get; set; }
         public Point P2 { get; set; }
 
+        public double WhiteRatio { get; set; }
 
         public Line(Point p1, Point p2)
         {
