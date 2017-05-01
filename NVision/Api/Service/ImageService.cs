@@ -2,6 +2,7 @@
 using System.Drawing;
 using Helper;
 using NVision.Internal.Formatting;
+using NVision.Internal.Model;
 using NVision.Internal.Service;
 
 namespace NVision.Api.Service
@@ -44,12 +45,12 @@ namespace NVision.Api.Service
 
             var coloredStandardImage = grayImage.ConvertToStandardImage();
 
-            foreach (var point in corners)
-            {
-                coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
-            }
+            //foreach (var point in corners)
+            //{
+            //    coloredStandardImage = coloredStandardImage.DrawIndicator(point.X, point.Y, 2);
+            //}
 
-            var rotatedImage = _documentStraightenerService.StraightenDocument(standardImage, corners);
+            StandardImage rotatedImage = null;// _documentStraightenerService.StraightenDocument(standardImage, corners);
 
             var result = rotatedImage.ConvertToBitmap();
 

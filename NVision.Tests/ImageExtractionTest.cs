@@ -10,6 +10,7 @@ using NVision.Report;
 using Newtonsoft.Json;
 using NVision.Internal.Service;
 using NVision.Internal.Formatting;
+using NVision.Internal.Model;
 
 namespace NVision.Tests
 {
@@ -39,6 +40,14 @@ namespace NVision.Tests
             };
         }
 
+
+        [Test]
+        public void ShouldGetLine()
+        {
+            var grayImage = new GrayscaleStandardImage() {Height = 500, Width = 350};
+            var point = new Point(175,250);
+            var line = _documentCornersDetectionService.GetLineFromAngleAndPoint(grayImage, point, 45);
+        }
 
         [Test]
         public void SpectralAnalysis()
@@ -154,18 +163,21 @@ namespace NVision.Tests
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
                 standardImage = grayImage.ConvertToStandardImage();
-                var pixels = ImageHelper.GetLinePixels(50, 50, 20, 450);
-                standardImage = standardImage.DrawPixels(pixels);
-                standardImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 // Step Corner Detection
                 step = Operation.ImageCornerDetection;
                 _stopwatch.Start();
                 var corners = _documentCornersDetectionService.GetCorners(grayImage);
+                foreach (var corner in corners)
+                {
+                    standardImage = ImageHelper.DrawPixels(standardImage ,ImageHelper.GetLinePixels(corner.P1.X, corner.P1.Y, corner.P2.X, corner.P2.Y));
+                }
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
-                _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
+                standardImage.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
+
+                //   _documentCornersDetectionService.GetCornersImageResult(standardImage, corners).ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 //var originalRatio = targetStandardImage.Height / grayImage.Height;
                 //IList<Point> originalCornersCoordinates = new List<Point>();
