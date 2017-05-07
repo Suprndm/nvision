@@ -46,25 +46,59 @@ namespace NVision.Internal.Service
             return groupedLines;
         }
 
+        internal IList<Point> GetFinalCorners(GrayscaleStandardImage image, IDictionary<FormType, IList<Point>> potentialCorners)
+        {
+            var potentialDocumentCorners = new Dictionary<IList<Point>, double>();
+
+            foreach (var topLeftCorner in potentialCorners[FormType.TopLeft])
+            {
+                foreach (var topRightCorner in potentialCorners[FormType.TopRight])
+                {
+                    foreach (var bottomRightCorner in potentialCorners[FormType.BottomRight])
+                    {
+                        foreach (var bottomLeftCorner in potentialCorners[FormType.BottomLeft])
+                        {
+                            var pixels = new List<Point>();
+                            pixels.AddRange(ImageHelper.GetLinePixels(topLeftCorner.X, topLeftCorner.Y, topRightCorner.X, topRightCorner.Y));
+                            pixels.AddRange(ImageHelper.GetLinePixels(topRightCorner.X, topRightCorner.Y, bottomRightCorner.X, bottomRightCorner.Y));
+                            pixels.AddRange(ImageHelper.GetLinePixels(bottomRightCorner.X, bottomRightCorner.Y, bottomLeftCorner.X, bottomLeftCorner.Y));
+                            pixels.AddRange(ImageHelper.GetLinePixels(bottomLeftCorner.X, bottomLeftCorner.Y, topLeftCorner.X, topLeftCorner.Y));
+
+                            int whiteCount = 0;
+                            foreach (var pixel in pixels)
+                            {
+                                if (image.C[pixel.X, pixel.Y] == 255)
+                                    whiteCount++;
+                            }
+
+                            potentialDocumentCorners.Add(new List<Point> { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner }, (double)whiteCount / pixels.Count);
+                        }
+                    }
+                }
+            }
+
+           return potentialDocumentCorners.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+        }
+
         internal IList<Point> GetCorners(IList<Line> lines, GrayscaleStandardImage image)
         {
             ConcurrentBag<Point> bestCorners = new ConcurrentBag<Point>();
             var potentialCorners = new List<Point>();
-                // GET BEST PAIR OF LINE
-                for (int i = 0; i < lines.Count - 1; i++)
+            // GET BEST PAIR OF LINE
+            for (int i = 0; i < lines.Count - 1; i++)
+            {
+                for (int j = i + 1; j < lines.Count; j++)
                 {
-                    for (int j = i + 1; j < lines.Count; j++)
-                    {
-                        var intersection = new LineIntersection(lines[i], lines[j]);
+                    var intersection = new LineIntersection(lines[i], lines[j]);
 
-                        if (intersection.IntersectionPoint.X > 0 && intersection.IntersectionPoint.X < image.Width
-                            && intersection.IntersectionPoint.Y > 0 &&
-                            intersection.IntersectionPoint.Y < image.Height)
-                        {
-                            bestCorners.Add(intersection.IntersectionPoint);
-                        }
+                    if (intersection.IntersectionPoint.X > 0 && intersection.IntersectionPoint.X < image.Width
+                        && intersection.IntersectionPoint.Y > 0 &&
+                        intersection.IntersectionPoint.Y < image.Height)
+                    {
+                        bestCorners.Add(intersection.IntersectionPoint);
                     }
                 }
+            }
 
             return bestCorners.ToList();
         }
@@ -120,7 +154,7 @@ namespace NVision.Internal.Service
         {
             var g = 50;
             var groupedLines = new Dictionary<Line, double>();
-            var orderedLines = lines.Where(kv=>kv.Value>0.4).OrderByDescending(s => s.Value).ToList();
+            var orderedLines = lines.Where(kv => kv.Value > 0.4).OrderByDescending(s => s.Value).ToList();
             foreach (var result in orderedLines)
             {
                 if (groupedLines.Count == 0)
@@ -136,7 +170,7 @@ namespace NVision.Internal.Service
                         var distanceP2 =
                              Math.Sqrt(Math.Pow(groupedLine.Key.P2.X - result.Key.P2.X, 2) + Math.Pow(groupedLine.Key.P2.Y - result.Key.P2.Y, 2));
 
-                        var distance = (distanceP1 + distanceP2)/2;
+                        var distance = (distanceP1 + distanceP2) / 2;
 
                         forces.Add(groupedLine.Key, 1 / (distance) * g);
                     }

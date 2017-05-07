@@ -25,7 +25,7 @@ namespace NVision.Api.Model
         {
             P1 = p1;
             P2 = p2;
-            A = (double)(p1.Y - p2.Y)/(p2.X - p1.X);
+            A = (double)(p2.Y - p1.Y)/(p2.X - p1.X);
             B = p1.Y-(A*p1.X);
         }
     }

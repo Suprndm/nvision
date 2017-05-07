@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -34,8 +36,8 @@ namespace NVision.Tests
             _stopwatch = new Stopwatch();
             _testCases = new List<Bitmap>
             {
-                Resources.Resources.TestCase1,
-               Resources.Resources.TestCase2,
+                 Resources.Resources.TestCase1,
+                Resources.Resources.TestCase2,
                Resources.Resources.TestCase3,
                Resources.Resources.TestCase4,
                Resources.Resources.TestCase5,
@@ -170,20 +172,23 @@ namespace NVision.Tests
                 step = Operation.ImageCornerDetection;
                 _stopwatch.Start();
                 var masks = new Dictionary<FormType, Area>();
+                var widthOverlay = image.Width / 10;
+                var heightOverlay = image.Height / 10;
 
-                //masks.Add(FormType.TopLeft, new Area(0, 0, image.Width / 2, image.Height / 2));
-                //masks.Add(FormType.TopRight, new Area(image.Width / 2, 0, image.Width, image.Height / 2));
-                masks.Add(FormType.BottomLeft, new Area(0, image.Height / 2, image.Width / 2, image.Height));
-                //masks.Add(FormType.BottomRight, new Area(image.Width / 2, image.Height / 2, image.Width, image.Height));
+                masks.Add(FormType.TopLeft, new Area(0, 0, image.Width / 2 + widthOverlay, image.Height / 2 + heightOverlay));
+                masks.Add(FormType.TopRight, new Area(image.Width / 2-widthOverlay, 0, image.Width, image.Height / 2 + heightOverlay));
+                masks.Add(FormType.BottomLeft, new Area(0, image.Height / 2 - heightOverlay, image.Width / 2+widthOverlay, image.Height));
+                masks.Add(FormType.BottomRight, new Area(image.Width / 2 - widthOverlay, image.Height / 2 - heightOverlay, image.Width, image.Height));
                 var allForms = CornersBuilder.GetCornerForms();
                 var copiedImage = grayImage.ConvertToStandardImage();
-
+                var potentialCorners = new ConcurrentDictionary<FormType, IList<Point>>();
+                var interestColor = Color.FromArgb(200, 255, 200);
+                var lineColor = Color.FromArgb(255, 0, 0);
+                var cornerColor = Color.FromArgb(255, 200, 255);
                 Parallel.ForEach(masks.Keys, (form) =>
                 {
                     var interests = _documentCornersDetectionService.GetPointsOfInterest(grayImage, form, masks[form]);
-                    var interestColor = Color.FromArgb(0, 255, 0);
-                    var lineColor = Color.FromArgb(255, 0, 0);
-                    var cornerColor = Color.FromArgb(255, 0, 255);
+
 
                     foreach (var interest in interests)
                     {
@@ -201,36 +206,41 @@ namespace NVision.Tests
                     foreach (var corner in corners)
                     {
                         copiedImage = ImageHelper.DrawIndicator(copiedImage, corner.X, corner.Y, 5, cornerColor);
+                        potentialCorners.TryAdd(form, corners);
                     }
-
                 });
-                //foreach (var corner in corners)
-                //{
-                //    standardImage = ImageHelper.DrawPixels(standardImage ,ImageHelper.GetLinePixels(corner.P1.X, corner.P1.Y, corner.P2.X, corner.P2.Y));
-                //}
+
+                var finalCorners = _documentCornersDetectionService.GetFinalCorners(grayImage,
+                    potentialCorners.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+
+                foreach (var finalCorner in finalCorners)
+                {
+                    copiedImage = ImageHelper.DrawIndicator(copiedImage, finalCorner.X, finalCorner.Y, 5, lineColor);
+                }
+
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
                 image.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
                 copiedImage.ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
-                //var originalRatio = targetStandardImage.Height / grayImage.Height;
-                //IList<Point> originalCornersCoordinates = new List<Point>();
-                //foreach (var corner in corners)
-                //{
-                //    originalCornersCoordinates.Add(new Point(corner.X * originalRatio, corner.Y * originalRatio));
-                //}
+                var originalRatio = targetStandardImage.Height / grayImage.Height;
+                IList<Point> originalCornersCoordinates = new List<Point>();
+                foreach (var corner in finalCorners)
+                {
+                    originalCornersCoordinates.Add(new Point(corner.X * originalRatio, corner.Y * originalRatio));
+                }
 
-                //// Step Straightening
-                //step = Operation.ImageStraightening;
-                //_stopwatch.Start();
-                //var straightenImage = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
-                //_stopwatch.Stop();
-                //report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
-                //_stopwatch.Reset();
+                // Step Straightening
+                step = Operation.ImageStraightening;
+                _stopwatch.Start();
+                var straightenImage = _documentStraightenerService.StraightenDocument(targetStandardImage, originalCornersCoordinates);
+                _stopwatch.Stop();
+                report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
+                _stopwatch.Reset();
 
-                //_stopwatch.Stop();
-                //straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i + 1}.jpg", ImageFormat.Jpeg);
+                _stopwatch.Stop();
+                straightenImage.ConvertToBitmap().Save(path + $"StraightenedResult{i + 1}.jpg", ImageFormat.Jpeg);
             }
 
             long totalExecutionTime = 0;

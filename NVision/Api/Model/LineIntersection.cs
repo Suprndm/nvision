@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace NVision.Api.Model
 {
@@ -11,12 +12,17 @@ namespace NVision.Api.Model
 
         public LineIntersection(Line line1, Line line2)
         {
+            var a = line1.A;
+            var b = line1.B;
+            var c = line2.A;
+            var d = line2.B;
+
             Line1 = line1;
             Line2 = line2;
 
-            int a = (int)((line2.B - line1.B) / (line1.A - Line2.A));
-            int b = (int)((line1.A * line2.B - line1.B * line2.A) / (line1.A - Line2.A));
-            IntersectionPoint = new Point(a, b);
+            int x = (int)((d - b)/(a - c));
+            int y = (int) ((a*d - b*c)/(a - c));
+            IntersectionPoint = new Point(x, y);
 
             WhiteRatio = (Line1.WhiteRatio + line2.WhiteRatio)/2;
         }
