@@ -71,7 +71,7 @@ namespace NVision.Internal.Service
                                     whiteCount++;
                             }
 
-                            potentialDocumentCorners.Add(new List<Point> { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner }, (double)whiteCount / pixels.Count);
+                            potentialDocumentCorners.Add(new List<Point> { topLeftCorner, topRightCorner, bottomRightCorner, bottomLeftCorner }, (double)whiteCount / pixels.Count);
                         }
                     }
                 }
