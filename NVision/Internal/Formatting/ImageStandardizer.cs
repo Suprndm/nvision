@@ -6,26 +6,64 @@ namespace NVision.Internal.Formatting
 {
     public static class ImageStandardizer
     {
-        internal static StandardImage ConvertToStandardImage(this Bitmap bitmap)
+        internal static StandardImage ConvertToStandardImage(this Bitmap bitmap, int overlay = 0)
         {
             var imageData = new StandardImage
             {
-                Height = bitmap.Height,
-                Width = bitmap.Width,
-                R = new int[bitmap.Width, bitmap.Height],
-                G = new int[bitmap.Width, bitmap.Height],
-                B = new int[bitmap.Width, bitmap.Height],
-                Area = new Area(0,0, bitmap.Width, bitmap.Height)
+                Height = bitmap.Height + overlay,
+                Width = bitmap.Width + overlay,
+                R = new int[bitmap.Width + overlay, bitmap.Height + overlay],
+                G = new int[bitmap.Width + overlay, bitmap.Height + overlay],
+                B = new int[bitmap.Width + overlay, bitmap.Height + overlay],
+                Area = new Area(0, 0, bitmap.Width + overlay, bitmap.Height + overlay)
             };
 
-            for (int x = 0; x < bitmap.Width; x++)
+            for (int x = -overlay / 2; x < bitmap.Width + overlay / 2; x++)
             {
-                for (int y = 0; y < bitmap.Height; y++)
+                for (int y = -overlay / 2; y < bitmap.Height + overlay / 2; y++)
                 {
-                    Color pixelColor = bitmap.GetPixel(x, y);
-                    imageData.R[x, y] = pixelColor.R;
-                    imageData.G[x, y] = pixelColor.G;
-                    imageData.B[x, y] = pixelColor.B;
+                    Color pixelColor = Color.DarkBlue;
+                    if (x < 0 && (y >= 0 && y < bitmap.Height))
+                    {
+                        pixelColor = bitmap.GetPixel(0, y);
+                    }
+                    else if (y < 0 / 2 && (x >= 0 && x < bitmap.Width))
+                    {
+                        pixelColor = bitmap.GetPixel(x, 0);
+                    }
+                    else if (x >= bitmap.Width && (y >= 0 && y < bitmap.Height))
+                    {
+                        pixelColor = bitmap.GetPixel(bitmap.Width - 1, y);
+                    }
+                    else if (y >= bitmap.Height && (x >= 0 && x < bitmap.Width))
+                    {
+                        pixelColor = bitmap.GetPixel(x, bitmap.Height - 1);
+                    }
+                    else if (x < 0 && y < 0)
+                    {
+                        pixelColor = bitmap.GetPixel(0, 0);
+                    }
+                    else if (x < 0 && y >= bitmap.Height)
+                    {
+                        pixelColor = bitmap.GetPixel(0, bitmap.Height - 1);
+                    }
+
+                    else if (x >= bitmap.Width && y < 0)
+                    {
+                        pixelColor = bitmap.GetPixel(bitmap.Width - 1, 0);
+                    }
+                    else if (x >= bitmap.Width && y >= bitmap.Height)
+                    {
+                        pixelColor = bitmap.GetPixel(bitmap.Width - 1, bitmap.Height - 1);
+                    }
+                    else
+                    {
+                        pixelColor = bitmap.GetPixel(x, y);
+                    }
+
+                    imageData.R[x + overlay / 2, y + overlay / 2] = pixelColor.R;
+                    imageData.G[x + overlay / 2, y + overlay / 2] = pixelColor.G;
+                    imageData.B[x + overlay / 2, y + overlay / 2] = pixelColor.B;
                 }
             }
 
@@ -47,7 +85,7 @@ namespace NVision.Internal.Formatting
                 for (int y = 0; y < bitmap.Height; y++)
                 {
                     Color pixelColor = bitmap.GetPixel(x, y);
-                    grayscaleImageData.C[x, y] = (pixelColor.R+ pixelColor.G + pixelColor.B)/3;
+                    grayscaleImageData.C[x, y] = (pixelColor.R + pixelColor.G + pixelColor.B) / 3;
                 }
             }
 
@@ -57,13 +95,13 @@ namespace NVision.Internal.Formatting
         internal static Bitmap ConvertToBitmap(this StandardImage standardImage)
         {
             var bitmap = new Bitmap(standardImage.Width, standardImage.Height);
-         
+
 
             for (int x = 0; x < bitmap.Width; x++)
             {
                 for (int y = 0; y < bitmap.Height; y++)
                 {
-                    bitmap.SetPixel(x,y, Color.FromArgb(standardImage.R[x, y], standardImage.G[x, y], standardImage.B[x, y]));
+                    bitmap.SetPixel(x, y, Color.FromArgb(standardImage.R[x, y], standardImage.G[x, y], standardImage.B[x, y]));
                 }
             }
 

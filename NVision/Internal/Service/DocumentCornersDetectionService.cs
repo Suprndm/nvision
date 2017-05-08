@@ -154,7 +154,15 @@ namespace NVision.Internal.Service
         {
             var g = 50;
             var groupedLines = new Dictionary<Line, double>();
-            var orderedLines = lines.Where(kv => kv.Value > 0.4).OrderByDescending(s => s.Value).ToList();
+            double averageScore = 0;
+            foreach (var line in lines)
+            {
+                averageScore += line.Value;
+            }
+            averageScore = averageScore/lines.Count;
+            var maxScore = lines.Max(kv => kv.Value);
+            var cutoff = (averageScore + maxScore)/2;
+            var orderedLines = lines.Where(kv => kv.Value > cutoff).OrderByDescending(s => s.Value).ToList();
             foreach (var result in orderedLines)
             {
                 if (groupedLines.Count == 0)

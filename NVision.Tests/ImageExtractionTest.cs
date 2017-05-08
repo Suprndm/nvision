@@ -151,11 +151,12 @@ namespace NVision.Tests
                 var bitmap = _testCases[i];
                 var reducedBitmap = bitmap.ReduceSize((double)500 / Math.Max(bitmap.Width, bitmap.Height));
                 var targetBitmap = bitmap.ReduceSize((double)1000 / Math.Max(bitmap.Width, bitmap.Height));
-                var targetStandardImage = targetBitmap.ConvertToStandardImage();
-                var image = reducedBitmap.ConvertToStandardImage();
+                var targetStandardImage = targetBitmap.ConvertToStandardImage(100);
+                var image = reducedBitmap.ConvertToStandardImage(100);
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
+                image.ConvertToBitmap().Save(path + $"Initial Image{i + 1}.jpg", ImageFormat.Jpeg);
 
                 // Step preparation
                 step = Operation.ImagePreparation;
@@ -167,6 +168,7 @@ namespace NVision.Tests
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
                 image = grayImage.ConvertToStandardImage();
+                image.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 // Step Corner Detection
                 step = Operation.ImageCornerDetection;
@@ -185,6 +187,7 @@ namespace NVision.Tests
                 var interestColor = Color.FromArgb(200, 255, 200);
                 var lineColor = Color.FromArgb(255, 0, 0);
                 var cornerColor = Color.FromArgb(255, 200, 255);
+                var lines = new ConcurrentBag<Line>();
                 Parallel.ForEach(masks.Keys, (form) =>
                 {
                     var interests = _documentCornersDetectionService.GetPointsOfInterest(grayImage, form, masks[form]);
@@ -194,21 +197,27 @@ namespace NVision.Tests
                     {
                         copiedImage = ImageHelper.DrawIndicator(copiedImage, interest.X, interest.Y, 5, interestColor);
                     }
-                    var lines = _documentCornersDetectionService.GetLines(interests, grayImage);
+                    var partialLines = _documentCornersDetectionService.GetLines(interests, grayImage);
 
-                    foreach (var line in lines)
+                    foreach (var partialLine in partialLines)
                     {
-                        var pixels = ImageHelper.GetLinePixels(line.P1.X, line.P1.Y, line.P2.X, line.P2.Y);
-                        copiedImage = copiedImage.DrawPixels(pixels, lineColor);
+                            lines.Add(partialLine);
                     }
+                  });
 
-                    var corners = _documentCornersDetectionService.GetCorners(lines, grayImage);
-                    foreach (var corner in corners)
-                    {
-                        copiedImage = ImageHelper.DrawIndicator(copiedImage, corner.X, corner.Y, 5, cornerColor);
-                        potentialCorners.TryAdd(form, corners);
-                    }
-                });
+                foreach (var line in lines)
+                {
+                    var pixels = ImageHelper.GetLinePixels(line.P1.X, line.P1.Y, line.P2.X, line.P2.Y);
+                    copiedImage = copiedImage.DrawPixels(pixels, lineColor);
+                }
+
+                var corners = _documentCornersDetectionService.GetCorners(lines.ToList(), grayImage);
+
+                //foreach (var corner in corners)
+                //{
+                //    copiedImage = ImageHelper.DrawIndicator(copiedImage, corner.X, corner.Y, 5, cornerColor);
+                //    potentialCorners.TryAdd(form, corners);
+                //}
 
                 var finalCorners = _documentCornersDetectionService.GetFinalCorners(grayImage,
                     potentialCorners.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
@@ -221,7 +230,6 @@ namespace NVision.Tests
                 _stopwatch.Stop();
                 report.Results[step].ExecutionTimePerImageMs += _stopwatch.ElapsedMilliseconds;
                 _stopwatch.Reset();
-                image.ConvertToBitmap().Save(path + $"PreparationResult_{i + 1}.jpg", ImageFormat.Jpeg);
                 copiedImage.ConvertToBitmap().Save(path + $"CornersResult_{i + 1}.jpg", ImageFormat.Jpeg);
 
                 var originalRatio = targetStandardImage.Height / grayImage.Height;
